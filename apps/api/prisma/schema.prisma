@@ -1,0 +1,215 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum MeetingStatus {
+  DRAFT
+  ACTIVE
+  EXPIRED
+  ARCHIVED
+}
+
+enum AccessType {
+  PUBLIC
+  PASSWORD
+  PRIVATE
+}
+
+enum FileVersionStatus {
+  PENDING
+  READY
+  FAILED
+}
+
+enum AuditAction {
+  AUTH_REGISTER
+  AUTH_LOGIN
+  AUTH_REFRESH
+  AUTH_LOGOUT
+  ORGANIZATION_UPDATE
+  MEETING_CREATE
+  MEETING_UPDATE
+  FILE_PRESIGN
+  FILE_UPLOAD_COMPLETE
+  FILE_DOWNLOAD
+  PUBLIC_ACCESS_VERIFIED
+  PUBLIC_FILE_ACCESS
+}
+
+model Organization {
+  id           String      @id @default(uuid())
+  name         String
+  logoUrl      String?
+  primaryColor String      @default("#1B4DFF")
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  users      User[]
+  meetings   Meeting[]
+  files      File[]
+  scanEvents ScanEvent[]
+  auditLogs  AuditLog[]
+}
+
+model User {
+  id             String   @id @default(uuid())
+  organizationId String
+  email          String
+  passwordHash   String
+  role           Role     @default(ADMIN)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sessions       Session[]
+  createdMeetings Meeting[]    @relation("MeetingCreatedBy")
+  createdFiles    File[]       @relation("FileCreatedBy")
+  createdVersions FileVersion[] @relation("FileVersionCreatedBy")
+  auditLogs       AuditLog[]    @relation("AuditActor")
+
+  @@unique([organizationId, email])
+  @@index([organizationId, role])
+}
+
+model Session {
+  id               String    @id @default(uuid())
+  userId           String
+  refreshTokenHash String
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  ipAddress        String?
+  userAgent        String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@index([revokedAt])
+}
+
+model Meeting {
+  id             String       @id @default(uuid())
+  organizationId String
+  slug           String       @unique
+  title          String
+  description    String?
+  status         MeetingStatus @default(ACTIVE)
+  startsAt       DateTime?
+  expiresAt      DateTime?
+  createdById    String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    User               @relation("MeetingCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  accessPolicy MeetingAccessPolicy?
+  files        File[]
+  scanEvents   ScanEvent[]
+  auditLogs    AuditLog[]
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([organizationId, status])
+}
+
+model MeetingAccessPolicy {
+  id             String   @id @default(uuid())
+  meetingId      String   @unique
+  accessType     AccessType @default(PUBLIC)
+  passwordHash   String?
+  accessStartsAt DateTime?
+  accessEndsAt   DateTime?
+  oneTimeAccess  Boolean  @default(false)
+  viewOnly       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+}
+
+model File {
+  id             String   @id @default(uuid())
+  organizationId String
+  meetingId      String
+  name           String
+  mimeType       String
+  size           Int
+  sha256         String
+  objectKey      String
+  createdById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  meeting      Meeting      @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  createdBy    User         @relation("FileCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  versions     FileVersion[]
+
+  @@index([organizationId, meetingId, createdAt(sort: Desc)])
+  @@index([meetingId, name])
+}
+
+model FileVersion {
+  id          String            @id @default(uuid())
+  fileId      String
+  version     Int
+  objectKey   String
+  mimeType    String
+  size        Int
+  sha256      String
+  status      FileVersionStatus @default(PENDING)
+  createdById String
+  createdAt   DateTime          @default(now())
+
+  file      File @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  createdBy User @relation("FileVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@unique([fileId, version])
+  @@index([fileId, status, createdAt(sort: Desc)])
+}
+
+model ScanEvent {
+  id             String   @id @default(uuid())
+  organizationId String
+  meetingId      String
+  ipAddress      String?
+  device         String?
+  scannedAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  meeting      Meeting      @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@index([meetingId, scannedAt(sort: Desc)])
+}
+
+model AuditLog {
+  id             String      @id @default(uuid())
+  organizationId String
+  actorUserId    String?
+  meetingId      String?
+  action         AuditAction
+  entityType     String
+  entityId       String
+  metadata       Json?
+  createdAt      DateTime    @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actorUser    User?         @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  meeting      Meeting?      @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([action, createdAt(sort: Desc)])
+}
+

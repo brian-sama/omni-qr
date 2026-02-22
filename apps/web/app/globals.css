@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 220 25% 96%;
+  --foreground: 225 34% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 225 34% 12%;
+  --primary: 221 88% 56%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 170 75% 43%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 220 18% 92%;
+  --muted-foreground: 222 16% 44%;
+  --accent: 38 96% 58%;
+  --accent-foreground: 220 32% 11%;
+  --danger: 355 78% 57%;
+  --danger-foreground: 210 40% 98%;
+  --border: 220 17% 83%;
+  --input: 220 17% 83%;
+  --ring: 221 88% 56%;
+}
+
+.dark {
+  --background: 222 42% 8%;
+  --foreground: 210 32% 94%;
+  --card: 221 33% 11%;
+  --card-foreground: 210 32% 94%;
+  --primary: 216 92% 63%;
+  --primary-foreground: 222 38% 10%;
+  --secondary: 169 86% 41%;
+  --secondary-foreground: 210 32% 97%;
+  --muted: 223 30% 18%;
+  --muted-foreground: 220 14% 72%;
+  --accent: 41 94% 56%;
+  --accent-foreground: 220 35% 10%;
+  --danger: 355 78% 57%;
+  --danger-foreground: 210 40% 98%;
+  --border: 223 28% 22%;
+  --input: 223 28% 22%;
+  --ring: 216 92% 63%;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at 8% 8%, rgba(24, 77, 255, 0.12), transparent 30%),
+    radial-gradient(circle at 92% 12%, rgba(25, 183, 157, 0.1), transparent 26%),
+    hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
