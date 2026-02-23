@@ -32,8 +32,8 @@ jobs:
           file: apps/api/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/omniqr-api:latest
-            ghcr.io/${{ github.repository_owner }}/omniqr-api:sha-${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/scansuite-api:latest
+            ghcr.io/${{ github.repository_owner }}/scansuite-api:sha-${{ github.sha }}
 
       - name: Build and push Web image
         uses: docker/build-push-action@v6
@@ -42,8 +42,8 @@ jobs:
           file: apps/web/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/omniqr-web:latest
-            ghcr.io/${{ github.repository_owner }}/omniqr-web:sha-${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/scansuite-web:latest
+            ghcr.io/${{ github.repository_owner }}/scansuite-web:sha-${{ github.sha }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -59,10 +59,10 @@ jobs:
           port: ${{ secrets.VPS_SSH_PORT }}
           script: |
             set -euo pipefail
-            cd /opt/omniqr
+            cd /opt/scan-suite
 
-            export API_IMAGE=ghcr.io/${{ github.repository_owner }}/omniqr-api:sha-${{ github.sha }}
-            export WEB_IMAGE=ghcr.io/${{ github.repository_owner }}/omniqr-web:sha-${{ github.sha }}
+            export API_IMAGE=ghcr.io/${{ github.repository_owner }}/scansuite-api:sha-${{ github.sha }}
+            export WEB_IMAGE=ghcr.io/${{ github.repository_owner }}/scansuite-web:sha-${{ github.sha }}
 
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ secrets.GHCR_USER }}" --password-stdin
 

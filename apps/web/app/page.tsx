@@ -25,7 +25,7 @@ export default function LandingPage() {
             <QrCode className="h-5 w-5" />
           </div>
           <div>
-            <p className="font-[var(--font-space-grotesk)] text-lg font-semibold tracking-tight">omniQR</p>
+            <p className="font-[var(--font-space-grotesk)] text-lg font-semibold tracking-tight">Scan Suite</p>
             <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Enterprise</p>
           </div>
         </div>
@@ -54,7 +54,7 @@ export default function LandingPage() {
             Enterprise-grade QR document delivery for high-stakes meetings.
           </h1>
           <p className="mt-5 max-w-2xl text-base text-muted-foreground sm:text-lg">
-            omniQR gives boards, councils, universities, and institutions one trusted workflow for secure distribution,
+            Scan Suite gives boards, councils, universities, and institutions one trusted workflow for secure distribution,
             live updates, and full auditability.
           </p>
 

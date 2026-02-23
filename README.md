@@ -1,6 +1,6 @@
-# omniQR Enterprise Monorepo
+# Scan Suite Monorepo
 
-omniQR is a production-oriented meeting distribution platform for enterprise environments.
+Scan Suite is a production-oriented meeting distribution platform for enterprise environments.
 
 ## What Is Included
 

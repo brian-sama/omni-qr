@@ -199,7 +199,7 @@ export default function App() {
             <div className="w-10 h-10 bg-[#0A1F44] rounded-xl flex items-center justify-center text-white">
               <QrCode size={24} />
             </div>
-            <span className="font-bold text-xl text-[#0A1F44]">OmniQR</span>
+            <span className="font-bold text-xl text-[#0A1F44]">Scan Suite</span>
           </div>
 
           <nav className="space-y-1">
@@ -801,7 +801,7 @@ function PublicView({ folderData }: { folderData: any }) {
         </div>
 
         <footer className="mt-12 text-center">
-          <p className="text-xs text-gray-400">Powered by OmniQR Paperless Meeting Infrastructure</p>
+          <p className="text-xs text-gray-400">Powered by Scan Suite Paperless Meeting Infrastructure</p>
         </footer>
       </main>
     </div>

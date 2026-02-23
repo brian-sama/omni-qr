@@ -36,7 +36,7 @@ export function Sidebar() {
             </span>
           </div>
           <div>
-            <p className="text-lg font-semibold text-foreground">omniQR</p>
+            <p className="text-lg font-semibold text-foreground">Scan Suite</p>
             <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Enterprise</p>
           </div>
         </div>

@@ -13,7 +13,7 @@ import QRCode from "qrcode";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const JWT_SECRET = process.env.JWT_SECRET || "omni-qr-secret-key-2026";
+const JWT_SECRET = process.env.JWT_SECRET || "scan-suite-secret-key-2026";
 const UPLOADS_DIR = path.join(__dirname, "uploads");
 
 // Ensure uploads directory exists

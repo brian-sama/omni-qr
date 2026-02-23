@@ -44,7 +44,7 @@ export default function OnboardingPage() {
     <div className="space-y-6">
       <SectionHeading
         title="Guided onboarding"
-        subtitle="Set branding and create your first meeting to unlock the full omniQR workspace."
+        subtitle="Set branding and create your first meeting to unlock the full Scan Suite workspace."
       />
 
       <div className="grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">

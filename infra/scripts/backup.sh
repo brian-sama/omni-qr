@@ -3,6 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 COMPOSE_FILE="$ROOT_DIR/infra/compose/docker-compose.production.yml"
+COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-$(basename "$ROOT_DIR" | tr '[:upper:]' '[:lower:]')}"
+MINIO_VOLUME="${COMPOSE_PROJECT_NAME}_minio_data"
 BACKUP_ROOT="${BACKUP_ROOT:-$ROOT_DIR/backups}"
 TODAY="$(date +%F)"
 WEEK_TAG="$(date +%G-%V)"
@@ -16,13 +18,13 @@ DAILY_PATH="$BACKUP_ROOT/daily/$TODAY"
 
 echo "[backup] Dumping PostgreSQL"
 docker compose -f "$COMPOSE_FILE" exec -T postgres \
-  pg_dump -U "${POSTGRES_USER:-omniqr}" "${POSTGRES_DB:-omniqr}" > "$DAILY_PATH/database.sql"
+  pg_dump -U "${POSTGRES_USER:-scansuite}" "${POSTGRES_DB:-scansuite}" > "$DAILY_PATH/database.sql"
 
 gzip -f "$DAILY_PATH/database.sql"
 
 echo "[backup] Archiving MinIO data volume"
 docker run --rm \
-  -v omni-qr_minio_data:/data \
+  -v "$MINIO_VOLUME:/data" \
   -v "$DAILY_PATH":/backup \
   alpine:3.21 \
   sh -c 'cd /data && tar -czf /backup/minio-data.tgz .'

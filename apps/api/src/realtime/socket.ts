@@ -3,6 +3,7 @@ import type { Server as HttpServer } from "node:http";
 import { env } from "../config/env";
 import { verifyAccessToken, verifyPublicToken } from "../services/token.service";
 import { logger } from "../lib/logger";
+import { COOKIE_NAMES } from "../utils/http";
 
 let namespace: ReturnType<Server["of"]> | null = null;
 
@@ -43,8 +44,8 @@ export function createSocketServer(server: HttpServer): ReturnType<Server["of"]>
     try {
       const cookieHeader = socket.handshake.headers.cookie;
       const parsedCookie = parseCookieHeader(cookieHeader);
-      const authToken = socket.handshake.auth?.token ?? parsedCookie.omniqr_access;
-      const publicToken = socket.handshake.auth?.publicToken ?? parsedCookie.omniqr_public;
+      const authToken = socket.handshake.auth?.token ?? parsedCookie[COOKIE_NAMES.access];
+      const publicToken = socket.handshake.auth?.publicToken ?? parsedCookie[COOKIE_NAMES.publicAccess];
 
       if (authToken && typeof authToken === "string") {
         const payload = verifyAccessToken(authToken);

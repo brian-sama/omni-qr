@@ -3,7 +3,7 @@ version: "3.9"
 services:
   nginx:
     image: nginx:1.27-alpine
-    container_name: omniqr-nginx
+    container_name: scansuite-nginx
     depends_on:
       - web
       - api
@@ -14,14 +14,14 @@ services:
       - ../nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     restart: unless-stopped
     networks:
-      - omniqr
+      - scansuite
 
   web:
-    image: ${WEB_IMAGE:-omniqr-web:latest}
+    image: ${WEB_IMAGE:-scansuite-web:latest}
     build:
       context: ../..
       dockerfile: apps/web/Dockerfile
-    container_name: omniqr-web
+    container_name: scansuite-web
     env_file:
       - ../../.env.production
     environment:
@@ -33,14 +33,14 @@ services:
       - "3000"
     restart: unless-stopped
     networks:
-      - omniqr
+      - scansuite
 
   api:
-    image: ${API_IMAGE:-omniqr-api:latest}
+    image: ${API_IMAGE:-scansuite-api:latest}
     build:
       context: ../..
       dockerfile: apps/api/Dockerfile
-    container_name: omniqr-api
+    container_name: scansuite-api
     env_file:
       - ../../.env.production
     environment:
@@ -51,7 +51,7 @@ services:
       S3_REGION: ${S3_REGION:-us-east-1}
       S3_ACCESS_KEY: ${S3_ACCESS_KEY}
       S3_SECRET_KEY: ${S3_SECRET_KEY}
-      S3_BUCKET: ${S3_BUCKET:-omniqr-files}
+      S3_BUCKET: ${S3_BUCKET:-scansuite-files}
       S3_FORCE_PATH_STYLE: "true"
       CORS_ORIGIN: ${CORS_ORIGIN}
       APP_BASE_URL: ${APP_BASE_URL}
@@ -74,29 +74,29 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
     networks:
-      - omniqr
+      - scansuite
 
   postgres:
     image: postgres:16-alpine
-    container_name: omniqr-postgres
+    container_name: scansuite-postgres
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-omniqr}
-      POSTGRES_USER: ${POSTGRES_USER:-omniqr}
+      POSTGRES_DB: ${POSTGRES_DB:-scansuite}
+      POSTGRES_USER: ${POSTGRES_USER:-scansuite}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-omniqr} -d ${POSTGRES_DB:-omniqr}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-scansuite} -d ${POSTGRES_DB:-scansuite}"]
       interval: 10s
       timeout: 5s
       retries: 10
     restart: unless-stopped
     networks:
-      - omniqr
+      - scansuite
 
   minio:
     image: minio/minio:RELEASE.2025-02-07T23-21-09Z
-    container_name: omniqr-minio
+    container_name: scansuite-minio
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${S3_ACCESS_KEY}
@@ -113,35 +113,35 @@ services:
       retries: 10
     restart: unless-stopped
     networks:
-      - omniqr
+      - scansuite
 
   minio-init:
     image: minio/mc:RELEASE.2025-02-08T19-14-21Z
-    container_name: omniqr-minio-init
+    container_name: scansuite-minio-init
     depends_on:
       minio:
         condition: service_healthy
     environment:
       S3_ACCESS_KEY: ${S3_ACCESS_KEY}
       S3_SECRET_KEY: ${S3_SECRET_KEY}
-      S3_BUCKET: ${S3_BUCKET:-omniqr-files}
+      S3_BUCKET: ${S3_BUCKET:-scansuite-files}
     entrypoint:
       - /bin/sh
       - -c
       - |
-        mc alias set omniqr http://minio:9000 "$${S3_ACCESS_KEY}" "$${S3_SECRET_KEY}"
-        mc mb --ignore-existing omniqr/$${S3_BUCKET}
-        mc anonymous set none omniqr/$${S3_BUCKET}
+        mc alias set scansuite http://minio:9000 "$${S3_ACCESS_KEY}" "$${S3_SECRET_KEY}"
+        mc mb --ignore-existing scansuite/$${S3_BUCKET}
+        mc anonymous set none scansuite/$${S3_BUCKET}
 
     restart: "no"
     networks:
-      - omniqr
+      - scansuite
 
 volumes:
   postgres_data:
   minio_data:
 
 networks:
-  omniqr:
+  scansuite:
     driver: bridge
 

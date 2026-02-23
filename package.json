@@ -1,8 +1,8 @@
 {
-  "name": "omniqr-enterprise",
+  "name": "scan-suite-enterprise",
   "private": true,
   "version": "1.0.0",
-  "description": "omniQR enterprise monorepo",
+  "description": "Scan Suite enterprise monorepo",
   "workspaces": [
     "apps/*",
     "packages/*"

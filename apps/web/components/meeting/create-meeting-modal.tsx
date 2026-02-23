@@ -30,7 +30,7 @@ export function CreateMeetingModal({ open, onClose }: Props) {
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h3 className="text-xl font-semibold text-foreground">Create meeting</h3>
-            <p className="text-sm text-muted-foreground">Generate a secure live QR distribution room.</p>
+            <p className="text-sm text-muted-foreground">Start a new meeting to share files and information.</p>
           </div>
           <Button variant="ghost" className="w-9 px-0" onClick={onClose}>
             <X className="h-4 w-4" />
@@ -60,7 +60,7 @@ export function CreateMeetingModal({ open, onClose }: Props) {
         >
           <div className="space-y-1">
             <label className="text-sm font-medium text-foreground">Meeting title</label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Board Q2 Governance Review" required />
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Quarterly Review" required />
           </div>
 
           <div className="space-y-1">
@@ -69,25 +69,26 @@ export function CreateMeetingModal({ open, onClose }: Props) {
               className="min-h-[96px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Agenda notes, legal packet summary, distribution notes"
+              placeholder="Meeting agenda and notes"
             />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1">
-              <label className="text-sm font-medium text-foreground">Access mode</label>
+              <label className="text-sm font-medium text-foreground">Who can join?</label>
               <select
                 value={accessType}
                 onChange={(e) => setAccessType(e.target.value as "PUBLIC" | "PASSWORD" | "PRIVATE")}
-                className="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm text-foreground"
+                aria-label="Meeting access mode"
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground"
               >
-                <option value="PUBLIC">Public</option>
-                <option value="PASSWORD">Password</option>
-                <option value="PRIVATE">Private</option>
+                <option value="PUBLIC" className="bg-background text-foreground">Anyone with the link</option>
+                <option value="PASSWORD" className="bg-background text-foreground">Password protected</option>
+                <option value="PRIVATE" className="bg-background text-foreground">Only invited users (Private)</option>
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-foreground">Expires at (optional)</label>
+              <label className="text-sm font-medium text-foreground">When does it expire? (Optional)</label>
               <Input type="datetime-local" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} />
             </div>
           </div>

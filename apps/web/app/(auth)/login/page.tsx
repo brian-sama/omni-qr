@@ -32,7 +32,7 @@ export default function LoginPage() {
           <QrCode className="h-6 w-6" />
         </div>
         <h1 className="font-[var(--font-space-grotesk)] text-2xl font-semibold text-foreground">Welcome back</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Sign in to your omniQR enterprise workspace.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Sign in to your Scan Suite workspace.</p>
       </div>
 
       <form

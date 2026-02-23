@@ -3,9 +3,9 @@ import { env, isProduction } from "../config/env";
 import { ttlToMs } from "./duration";
 
 export const COOKIE_NAMES = {
-  access: "omniqr_access",
-  refresh: "omniqr_refresh",
-  publicAccess: "omniqr_public"
+  access: "scansuite_access",
+  refresh: "scansuite_refresh",
+  publicAccess: "scansuite_public"
 } as const;
 
 export function buildAccessCookieOptions(): CookieOptions {

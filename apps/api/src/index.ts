@@ -19,7 +19,7 @@ const server = http.createServer(app);
 createSocketServer(server);
 
 server.listen(env.API_PORT, "0.0.0.0", () => {
-  logger.info({ port: env.API_PORT }, "omniQR API server listening");
+  logger.info({ port: env.API_PORT }, "Scan Suite API server listening");
 });
 
 async function shutdown(signal: string) {

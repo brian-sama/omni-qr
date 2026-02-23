@@ -49,18 +49,20 @@ enum AuditAction {
 }
 
 model Organization {
-  id           String      @id @default(uuid())
+  id           String   @id @default(uuid())
   name         String
+  slug         String   @unique
   logoUrl      String?
-  primaryColor String      @default("#1B4DFF")
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  primaryColor String   @default("#1B4DFF")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   users      User[]
   meetings   Meeting[]
   files      File[]
   scanEvents ScanEvent[]
   auditLogs  AuditLog[]
+  invites    Invite[]
 }
 
 model User {
@@ -69,13 +71,14 @@ model User {
   email          String
   passwordHash   String
   role           Role     @default(ADMIN)
+  isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  sessions       Session[]
-  createdMeetings Meeting[]    @relation("MeetingCreatedBy")
-  createdFiles    File[]       @relation("FileCreatedBy")
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sessions        Session[]
+  createdMeetings Meeting[]     @relation("MeetingCreatedBy")
+  createdFiles    File[]        @relation("FileCreatedBy")
   createdVersions FileVersion[] @relation("FileVersionCreatedBy")
   auditLogs       AuditLog[]    @relation("AuditActor")
 
@@ -101,42 +104,32 @@ model Session {
 }
 
 model Meeting {
-  id             String       @id @default(uuid())
+  id             String        @id @default(uuid())
   organizationId String
-  slug           String       @unique
+  slug           String        @unique
   title          String
   description    String?
   status         MeetingStatus @default(ACTIVE)
+  accessType     AccessType    @default(PUBLIC)
+  passwordHash   String?
+  liveMode       Boolean       @default(false)
   startsAt       DateTime?
   expiresAt      DateTime?
   createdById    String
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
-  organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  createdBy    User               @relation("MeetingCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  accessPolicy MeetingAccessPolicy?
-  files        File[]
-  scanEvents   ScanEvent[]
-  auditLogs    AuditLog[]
+  organization    Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy       User                   @relation("MeetingCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  files           File[]
+  scanEvents      ScanEvent[]
+  auditLogs       AuditLog[]
+  qrConfig        QrConfig?
+  accessSessions  MeetingAccessSession[]
 
   @@index([organizationId, createdAt(sort: Desc)])
   @@index([organizationId, status])
-}
-
-model MeetingAccessPolicy {
-  id             String   @id @default(uuid())
-  meetingId      String   @unique
-  accessType     AccessType @default(PUBLIC)
-  passwordHash   String?
-  accessStartsAt DateTime?
-  accessEndsAt   DateTime?
-  oneTimeAccess  Boolean  @default(false)
-  viewOnly       Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  @@index([expiresAt])
 }
 
 model File {
@@ -152,19 +145,20 @@ model File {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  meeting      Meeting      @relation(fields: [meetingId], references: [id], onDelete: Cascade)
-  createdBy    User         @relation("FileCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  meeting      Meeting       @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  createdBy    User          @relation("FileCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   versions     FileVersion[]
 
   @@index([organizationId, meetingId, createdAt(sort: Desc)])
   @@index([meetingId, name])
+  @@index([sha256])
 }
 
 model FileVersion {
   id          String            @id @default(uuid())
   fileId      String
-  version     Int
+  version     Int               @default(1)
   objectKey   String
   mimeType    String
   size        Int
@@ -180,18 +174,46 @@ model FileVersion {
   @@index([fileId, status, createdAt(sort: Desc)])
 }
 
+model QrConfig {
+  id              String   @id @default(uuid())
+  meetingId       String   @unique
+  primaryColor    String?
+  backgroundColor String?
+  embedLogo       Boolean  @default(true)
+  layoutStyle     String?
+  footerText      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+}
+
 model ScanEvent {
   id             String   @id @default(uuid())
   organizationId String
   meetingId      String
   ipAddress      String?
   device         String?
+  userAgent      String?
+  country        String?
   scannedAt      DateTime @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   meeting      Meeting      @relation(fields: [meetingId], references: [id], onDelete: Cascade)
 
   @@index([meetingId, scannedAt(sort: Desc)])
+}
+
+model MeetingAccessSession {
+  id           String    @id @default(uuid())
+  meetingId    String
+  sessionToken String    @unique
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@index([meetingId])
 }
 
 model AuditLog {
@@ -206,10 +228,24 @@ model AuditLog {
   createdAt      DateTime    @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  actorUser    User?         @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
-  meeting      Meeting?      @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+  actorUser    User?        @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  meeting      Meeting?     @relation(fields: [meetingId], references: [id], onDelete: SetNull)
 
   @@index([organizationId, createdAt(sort: Desc)])
   @@index([action, createdAt(sort: Desc)])
+}
+
+model Invite {
+  id             String    @id @default(uuid())
+  organizationId String
+  email          String
+  role           Role      @default(VIEWER)
+  token          String    @unique
+  expiresAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
 }
 

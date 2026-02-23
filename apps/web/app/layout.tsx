@@ -16,17 +16,16 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "omniQR Enterprise",
+  title: "Scan Suite",
   description: "Secure meeting distribution infrastructure for enterprise and public institutions"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`${manrope.variable} ${spaceGrotesk.variable} font-[var(--font-manrope)]`}>
         <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );
 }
-

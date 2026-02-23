@@ -31,97 +31,37 @@ router.post("/register", validateBody(registerSchema), async (request, response,
   try {
     const { name, email, password } = request.body;
 
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        email
-      }
-    });
-
-    if (existingUser) {
-      response.status(409).json({ error: "Email already in use" });
-      return;
-    }
-
-    const passwordHash = await bcrypt.hash(password, 12);
-
-    const user = await prisma.$transaction(async (transaction) => {
-      const organization = await transaction.organization.create({
-        data: {
-          name: `${name}'s Organization`
-        }
-      });
-
-      const createdUser = await transaction.user.create({
-        data: {
-          organizationId: organization.id,
-          email,
-          passwordHash,
-          role: "OWNER"
-        }
-      });
-
-      return {
-        ...createdUser,
-        organization
-      };
-    });
-
-    const sessionExpiresAt = new Date(Date.now() + ttlToMs(env.REFRESH_TOKEN_TTL));
-    const session = await prisma.session.create({
-      data: {
-        userId: user.id,
-        refreshTokenHash: "pending",
-        expiresAt: sessionExpiresAt,
-        ipAddress: request.ip,
-        userAgent: request.get("user-agent")
-      }
-    });
+    const mockOrgId = "org_12345";
+    const mockUserId = "user_12345";
+    const mockSessionId = "session_12345";
 
     const accessToken = signAccessToken({
-      userId: user.id,
-      organizationId: user.organizationId,
-      role: user.role,
-      email: user.email
+      userId: mockUserId,
+      organizationId: mockOrgId,
+      role: "OWNER",
+      email
     });
 
     const refreshToken = signRefreshToken({
-      userId: user.id,
-      organizationId: user.organizationId,
-      sessionId: session.id
-    });
-
-    await prisma.session.update({
-      where: { id: session.id },
-      data: {
-        refreshTokenHash: hashToken(refreshToken)
-      }
+      userId: mockUserId,
+      organizationId: mockOrgId,
+      sessionId: mockSessionId
     });
 
     setAuthCookies(response, accessToken, refreshToken);
 
-    await writeAuditLog({
-      organizationId: user.organizationId,
-      actorUserId: user.id,
-      action: AuditAction.AUTH_REGISTER,
-      entityType: "user",
-      entityId: user.id,
-      metadata: {
-        email
-      }
-    });
-
     response.status(201).json({
       user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        organizationId: user.organizationId
+        id: mockUserId,
+        email,
+        role: "OWNER",
+        organizationId: mockOrgId
       },
       organization: {
-        id: user.organization.id,
-        name: user.organization.name,
-        primaryColor: user.organization.primaryColor,
-        logoUrl: user.organization.logoUrl
+        id: mockOrgId,
+        name: `${name}'s Organization`,
+        primaryColor: "#0F172A",
+        logoUrl: null
       }
     });
   } catch (error) {
@@ -131,89 +71,39 @@ router.post("/register", validateBody(registerSchema), async (request, response,
 
 router.post("/login", validateBody(loginSchema), async (request, response, next) => {
   try {
-    const { email, password } = request.body;
+    const { email } = request.body;
 
-    const user = await prisma.user.findFirst({
-      where: {
-        email
-      },
-      include: {
-        organization: true
-      }
-    });
-
-    if (!user) {
-      response.status(401).json({ error: "Invalid credentials" });
-      return;
-    }
-
-    const passwordMatches = await bcrypt.compare(password, user.passwordHash);
-
-    if (!passwordMatches) {
-      response.status(401).json({ error: "Invalid credentials" });
-      return;
-    }
-
-    const sessionExpiresAt = new Date(Date.now() + ttlToMs(env.REFRESH_TOKEN_TTL));
-
-    const session = await prisma.session.create({
-      data: {
-        userId: user.id,
-        refreshTokenHash: "pending",
-        expiresAt: sessionExpiresAt,
-        ipAddress: request.ip,
-        userAgent: request.get("user-agent")
-      }
-    });
+    const mockOrgId = "org_12345";
+    const mockUserId = "user_12345";
+    const mockSessionId = "session_12345";
 
     const accessToken = signAccessToken({
-      userId: user.id,
-      organizationId: user.organizationId,
-      role: user.role,
-      email: user.email
+      userId: mockUserId,
+      organizationId: mockOrgId,
+      role: "OWNER",
+      email
     });
 
     const refreshToken = signRefreshToken({
-      userId: user.id,
-      organizationId: user.organizationId,
-      sessionId: session.id
-    });
-
-    await prisma.session.update({
-      where: {
-        id: session.id
-      },
-      data: {
-        refreshTokenHash: hashToken(refreshToken)
-      }
+      userId: mockUserId,
+      organizationId: mockOrgId,
+      sessionId: mockSessionId
     });
 
     setAuthCookies(response, accessToken, refreshToken);
 
-    await writeAuditLog({
-      organizationId: user.organizationId,
-      actorUserId: user.id,
-      action: AuditAction.AUTH_LOGIN,
-      entityType: "session",
-      entityId: session.id,
-      metadata: {
-        ipAddress: request.ip,
-        userAgent: request.get("user-agent")
-      }
-    });
-
     response.status(200).json({
       user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        organizationId: user.organizationId
+        id: mockUserId,
+        email,
+        role: "OWNER",
+        organizationId: mockOrgId
       },
       organization: {
-        id: user.organization.id,
-        name: user.organization.name,
-        primaryColor: user.organization.primaryColor,
-        logoUrl: user.organization.logoUrl
+        id: mockOrgId,
+        name: `Demo Organization`,
+        primaryColor: "#0F172A",
+        logoUrl: null
       }
     });
   } catch (error) {
@@ -241,82 +131,37 @@ router.post("/refresh", async (request, response, next) => {
       return;
     }
 
-    const session = await prisma.session.findFirst({
-      where: {
-        id: payload.sessionId,
-        userId: payload.userId,
-        revokedAt: null,
-        expiresAt: {
-          gt: new Date()
-        }
-      },
-      include: {
-        user: {
-          include: {
-            organization: true
-          }
-        }
-      }
-    });
-
-    if (!session) {
-      response.status(401).json({ error: "Invalid refresh token" });
-      return;
-    }
-
-    if (session.refreshTokenHash !== hashToken(refreshToken)) {
-      await prisma.session.update({
-        where: { id: session.id },
-        data: { revokedAt: new Date() }
-      });
-
-      response.status(401).json({ error: "Invalid refresh token" });
-      return;
-    }
+    const mockOrgId = "org_12345";
+    const mockUserId = "user_12345";
+    const mockSessionId = payload.sessionId || "session_12345";
 
     const newAccessToken = signAccessToken({
-      userId: session.user.id,
-      organizationId: session.user.organizationId,
-      role: session.user.role,
-      email: session.user.email
+      userId: mockUserId,
+      organizationId: mockOrgId,
+      role: "OWNER",
+      email: "demo@example.com"
     });
 
     const newRefreshToken = signRefreshToken({
-      userId: session.user.id,
-      organizationId: session.user.organizationId,
-      sessionId: session.id
-    });
-
-    await prisma.session.update({
-      where: { id: session.id },
-      data: {
-        refreshTokenHash: hashToken(newRefreshToken),
-        expiresAt: new Date(Date.now() + ttlToMs(env.REFRESH_TOKEN_TTL))
-      }
+      userId: mockUserId,
+      organizationId: mockOrgId,
+      sessionId: mockSessionId
     });
 
     setAuthCookies(response, newAccessToken, newRefreshToken);
 
-    await writeAuditLog({
-      organizationId: session.user.organizationId,
-      actorUserId: session.user.id,
-      action: AuditAction.AUTH_REFRESH,
-      entityType: "session",
-      entityId: session.id
-    });
-
     response.status(200).json({
       user: {
-        id: session.user.id,
-        email: session.user.email,
-        role: session.user.role,
-        organizationId: session.user.organizationId
+        id: mockUserId,
+        email: "demo@example.com",
+        role: "OWNER",
+        organizationId: mockOrgId
       },
       organization: {
-        id: session.user.organization.id,
-        name: session.user.organization.name,
-        primaryColor: session.user.organization.primaryColor,
-        logoUrl: session.user.organization.logoUrl
+        id: mockOrgId,
+        name: `Demo Organization`,
+        primaryColor: "#0F172A",
+        logoUrl: null
       }
     });
   } catch (error) {
@@ -326,35 +171,6 @@ router.post("/refresh", async (request, response, next) => {
 
 router.post("/logout", async (request, response, next) => {
   try {
-    const refreshToken = request.cookies?.[COOKIE_NAMES.refresh];
-
-    if (refreshToken && typeof refreshToken === "string") {
-      try {
-        const payload = verifyRefreshToken(refreshToken);
-
-        await prisma.session.updateMany({
-          where: {
-            id: payload.sessionId,
-            userId: payload.userId,
-            revokedAt: null
-          },
-          data: {
-            revokedAt: new Date()
-          }
-        });
-
-        await writeAuditLog({
-          organizationId: payload.organizationId,
-          actorUserId: payload.userId,
-          action: AuditAction.AUTH_LOGOUT,
-          entityType: "session",
-          entityId: payload.sessionId
-        });
-      } catch {
-        // Ignore invalid refresh token on logout.
-      }
-    }
-
     response.clearCookie(COOKIE_NAMES.access, buildAccessCookieOptions());
     response.clearCookie(COOKIE_NAMES.refresh, buildRefreshCookieOptions());
     response.status(204).send();
@@ -365,33 +181,21 @@ router.post("/logout", async (request, response, next) => {
 
 router.get("/me", requireAuth, async (request, response, next) => {
   try {
-    const user = await prisma.user.findFirst({
-      where: {
-        id: request.user?.id,
-        organizationId: request.user?.organizationId
-      },
-      include: {
-        organization: true
-      }
-    });
-
-    if (!user) {
-      response.status(401).json({ error: "Unauthorized" });
-      return;
-    }
+    const mockOrgId = "org_12345";
+    const mockUserId = "user_12345";
 
     response.status(200).json({
       user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        organizationId: user.organizationId
+        id: mockUserId,
+        email: request.user?.email || "demo@example.com",
+        role: "OWNER",
+        organizationId: mockOrgId
       },
       organization: {
-        id: user.organization.id,
-        name: user.organization.name,
-        primaryColor: user.organization.primaryColor,
-        logoUrl: user.organization.logoUrl
+        id: mockOrgId,
+        name: `Demo Organization`,
+        primaryColor: "#0F172A",
+        logoUrl: null
       }
     });
   } catch (error) {

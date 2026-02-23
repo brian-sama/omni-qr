@@ -19,7 +19,7 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <SectionHeading
         title="Dashboard"
-        subtitle="Control center for enterprise meeting distribution, access posture, and engagement signals."
+        subtitle="Overview of your active meetings, storage usage, and recent activity."
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -90,7 +90,7 @@ export default function DashboardPage() {
           </div>
         )}
       </Card>
-    </div>
+    </div >
   );
 }
 

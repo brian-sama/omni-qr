@@ -159,7 +159,7 @@ export default function MeetingDetailPage() {
           title={meeting.title}
           slug={meeting.slug}
           onClose={() => setPosterOpen(false)}
-          organizationName="omniQR"
+          organizationName="Scan Suite"
         />
       ) : null}
     </div>
@@ -289,7 +289,7 @@ function PosterModal({
     const dataUrl = await QRCode.toDataURL(publicUrl, { width: 1024, margin: 2 });
     const link = document.createElement("a");
     link.href = dataUrl;
-    link.download = `omniqr-${slug}.png`;
+    link.download = `scansuite-${slug}.png`;
     link.click();
   }
 
@@ -299,7 +299,7 @@ function PosterModal({
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `omniqr-${slug}.svg`;
+    link.download = `scansuite-${slug}.svg`;
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -315,7 +315,7 @@ function PosterModal({
     printWindow.document.write(`
       <html>
         <head>
-          <title>omniQR Poster</title>
+          <title>Scan Suite Poster</title>
           <style>
             body { font-family: Arial, sans-serif; margin: 0; padding: 40px; }
             .card { border: 1px solid #dce3ee; border-radius: 18px; padding: 32px; text-align: center; }

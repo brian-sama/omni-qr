@@ -4,9 +4,9 @@ import { PrismaClient, Role } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = process.env.SEED_ADMIN_EMAIL ?? "admin@omniqr.local";
+  const email = process.env.SEED_ADMIN_EMAIL ?? "admin@scansuite.local";
   const password = process.env.SEED_ADMIN_PASSWORD ?? "ChangeMe123!ChangeMe123!";
-  const orgName = process.env.SEED_ORG_NAME ?? "omniQR Demo Organization";
+  const orgName = process.env.SEED_ORG_NAME ?? "Scan Suite Demo Organization";
 
   const existing = await prisma.user.findFirst({
     where: { email },

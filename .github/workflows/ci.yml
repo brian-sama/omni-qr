@@ -31,8 +31,8 @@ jobs:
         run: npm run test
 
       - name: Build Docker image (api)
-        run: docker build -f apps/api/Dockerfile -t omniqr-api:ci .
+        run: docker build -f apps/api/Dockerfile -t scansuite-api:ci .
 
       - name: Build Docker image (web)
-        run: docker build -f apps/web/Dockerfile -t omniqr-web:ci .
+        run: docker build -f apps/web/Dockerfile -t scansuite-web:ci .
 

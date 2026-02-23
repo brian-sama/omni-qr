@@ -9,7 +9,7 @@ const router = Router();
 router.get("/live", (_request, response) => {
   response.status(200).json({
     status: "ok",
-    service: "omniqr-api",
+    service: "scansuite-api",
     timestamp: new Date().toISOString()
   });
 });

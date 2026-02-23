@@ -49,7 +49,16 @@ async function request<T>(path: string, options: ApiFetchOptions = {}): Promise<
   }
 
   const text = await response.text();
-  const payload = text ? JSON.parse(text) : null;
+  let payload = null;
+  
+  try {
+    payload = text ? JSON.parse(text) : null;
+  } catch (error) {
+    if (!response.ok) {
+      throw new ApiError(text.substring(0, 200) || "Request failed", response.status, { text });
+    }
+    throw new Error("Invalid JSON response from server");
+  }
 
   if (!response.ok) {
     throw new ApiError(payload?.error ?? "Request failed", response.status, payload);

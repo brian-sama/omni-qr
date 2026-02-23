@@ -1,5 +1,5 @@
 {
-  "name": "OmniQR - Corporate Meeting Platform",
+  "name": "Scan Suite - Corporate Meeting Platform",
   "description": "Multi-tenant SaaS for branded dynamic QR codes and paperless meeting document distribution.",
   "requestFramePermissions": [
     "camera"
