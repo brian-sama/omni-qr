@@ -1,28 +1,29 @@
-# Scan Suite - Contabo VPS Deployment Guide
+# Scan Suite - Contabo VPS Deployment Guide (Let's Encrypt)
 
-This guide deploys **Scan Suite** to your Contabo VPS (`89.116.26.24`) and maps it to `scansuite.co.zw`.
+This guide deploys **Scan Suite** to your Contabo VPS (`89.116.26.24`) and sets up HTTPS for:
 
-The production stack uses Docker Compose: `infra/compose/docker-compose.production.yml`.
+1. `scansuite.co.zw`
+2. `www.scansuite.co.zw`
 
-## Prerequisites
+Repository:
 
-1. Contabo VPS running Ubuntu 22.04 or 24.04.
-2. SSH access to the VPS.
-3. Domain control for `scansuite.co.zw`.
+```bash
+git@github.com:brian-sama/omni-qr.git
+```
 
-## Step 1: Server Setup
+## 1) VPS bootstrap
 
-SSH into the server:
+SSH into your server:
 
 ```bash
 ssh root@89.116.26.24
 ```
 
-Install required packages and Docker:
+Install system packages and Docker:
 
 ```bash
 apt update && apt upgrade -y
-apt install -y git curl ca-certificates
+apt install -y git curl ca-certificates ufw
 
 curl -fsSL https://get.docker.com -o get-docker.sh
 sh get-docker.sh
@@ -31,53 +32,56 @@ docker --version
 docker compose version
 ```
 
-Optional firewall hardening:
+Configure firewall:
 
 ```bash
-apt install -y ufw
 ufw allow OpenSSH
 ufw allow 80/tcp
 ufw allow 443/tcp
 ufw --force enable
 ```
 
-## Step 2: Point DNS to the VPS
+## 2) DNS cutover
 
-Create these records at your DNS provider:
+At your DNS provider, configure:
 
-1. `A` record: `@` -> `89.116.26.24`
-2. `A` record: `www` -> `89.116.26.24`
+1. `A @ -> 89.116.26.24`
+2. `A www -> 89.116.26.24`
 
-After propagation, verify from any machine:
+Verify:
 
 ```bash
 nslookup scansuite.co.zw
 nslookup www.scansuite.co.zw
 ```
 
-## Step 3: Put Project on the VPS
+Both should resolve to `89.116.26.24`.
 
-Recommended path:
+## 3) Clone project
 
 ```bash
 mkdir -p /opt
 cd /opt
-
-# Replace with your repository URL
-git clone git@github.com:yourusername/scan-suite.git scan-suite
+git clone git@github.com:brian-sama/omni-qr.git scan-suite
 cd /opt/scan-suite
 ```
 
-## Step 4: Configure Production Environment
-
-Create production env file:
+## 4) Configure production env
 
 ```bash
 cp .env.production.example .env.production
 nano .env.production
 ```
 
-Set/verify at least:
+Set strong secrets:
+
+1. `JWT_ACCESS_SECRET`
+2. `JWT_REFRESH_SECRET`
+3. `POSTGRES_PASSWORD`
+4. `S3_ACCESS_KEY`
+5. `S3_SECRET_KEY`
+
+Domain values should be:
 
 1. `APP_BASE_URL=https://scansuite.co.zw`
 2. `API_BASE_URL=https://scansuite.co.zw/api`
@@ -85,49 +89,85 @@ Set/verify at least:
 4. `NEXT_PUBLIC_API_URL=https://scansuite.co.zw`
 5. `NEXT_PUBLIC_APP_URL=https://scansuite.co.zw`
 6. `NEXT_PUBLIC_SOCKET_URL=https://scansuite.co.zw`
-7. Strong values for `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`
-8. Safe `POSTGRES_PASSWORD`, `S3_ACCESS_KEY`, and `S3_SECRET_KEY`
 
-## Step 5: Deploy
+## 5) First deployment (HTTP bootstrap)
 
 ```bash
 chmod +x infra/scripts/deploy.sh
+chmod +x infra/scripts/setup-letsencrypt.sh
+chmod +x infra/scripts/renew-letsencrypt.sh
+
 ./infra/scripts/deploy.sh
 ```
 
-Or directly:
+`deploy.sh` behavior:
+
+1. Always pulls infrastructure images (`nginx`, `postgres`, `minio`, `minio-init`)
+2. Pulls `api`/`web` images only when `API_IMAGE` and/or `WEB_IMAGE` env vars are set
+3. If app image vars are not set, `api` and `web` are built from source on the VPS
+
+If you want to use GHCR images instead of local VPS builds:
 
 ```bash
-docker compose -f infra/compose/docker-compose.production.yml up -d --build
+export API_IMAGE=ghcr.io/<owner>/scansuite-api:latest
+export WEB_IMAGE=ghcr.io/<owner>/scansuite-web:latest
+echo "<ghcr-pat>" | docker login ghcr.io -u "<ghcr-user>" --password-stdin
+./infra/scripts/deploy.sh
 ```
 
-## Step 6: Initialize Database (First Deploy Only)
+Run first-time DB setup:
 
 ```bash
 docker compose -f infra/compose/docker-compose.production.yml exec api npx prisma migrate deploy
 docker compose -f infra/compose/docker-compose.production.yml exec api npm run db:seed
 ```
 
-## Step 7: Verify
+## 6) Issue Let's Encrypt certificate and enable HTTPS
+
+Run:
+
+```bash
+./infra/scripts/setup-letsencrypt.sh you@example.com
+```
+
+What this script does:
+
+1. Verifies DNS points to `89.116.26.24`
+2. Deploys HTTP bootstrap Nginx config with ACME challenge path
+3. Requests certificate for both domains via webroot mode
+4. Switches Nginx to TLS config and reloads services
+
+## 7) Configure automatic renewal
+
+Add cron job:
+
+```bash
+crontab -e
+```
+
+Use:
+
+```cron
+0 3 * * * /opt/scan-suite/infra/scripts/renew-letsencrypt.sh >> /var/log/scansuite-cert-renew.log 2>&1
+```
+
+## 8) Validate production
 
 ```bash
 docker compose -f infra/compose/docker-compose.production.yml ps
 curl -fsS http://localhost/health/live
+curl -I http://scansuite.co.zw
+curl -I https://scansuite.co.zw
+curl -I https://www.scansuite.co.zw
 ```
 
-Open in browser:
+Expected:
 
-1. `http://scansuite.co.zw`
-2. `http://www.scansuite.co.zw`
+1. `http://scansuite.co.zw` -> `301` to `https://scansuite.co.zw`
+2. `https://scansuite.co.zw` -> `200`
+3. `https://www.scansuite.co.zw` -> `301` to `https://scansuite.co.zw`
 
-## HTTPS Note
-
-Current Nginx config is HTTP reverse proxy. For HTTPS, either:
-
-1. Put the domain behind Cloudflare proxy and configure SSL mode correctly.
-2. Add origin TLS certificates in your Nginx setup.
-
-## Maintenance
+## 9) Operations
 
 ```bash
 # Logs
@@ -136,6 +176,20 @@ docker compose -f infra/compose/docker-compose.production.yml logs -f
 # Redeploy
 ./infra/scripts/deploy.sh
 
-# Stop
+# Stop stack
 docker compose -f infra/compose/docker-compose.production.yml down
+
+# Run backup
+./infra/scripts/backup.sh
 ```
+
+## 10) Rollback
+
+```bash
+cd /opt/scan-suite
+git log --oneline -n 5
+git checkout <previous_commit>
+./infra/scripts/deploy.sh
+```
+
+If database rollback is needed, restore from your latest backup before re-opening traffic.
