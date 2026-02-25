@@ -86,7 +86,11 @@ docker compose -f infra/compose/docker-compose.production.yml up -d --build
 ### Operational scripts
 
 - Deploy script: `infra/scripts/deploy.sh`
+  - Pulls infra images, then conditionally pulls app images when `API_IMAGE`/`WEB_IMAGE` are exported
+  - Falls back to building app services from source if app image vars are not set
 - Backup script: `infra/scripts/backup.sh`
+- Initial Let's Encrypt setup: `infra/scripts/setup-letsencrypt.sh`
+- Let's Encrypt renewal: `infra/scripts/renew-letsencrypt.sh`
 
 ### CI/CD
 
@@ -104,7 +108,7 @@ Set required repository secrets:
 
 ## Security/Infra Notes
 
-- Put domain behind Cloudflare proxy + WAF
+- Use Let's Encrypt certificates for `scansuite.co.zw` and `www.scansuite.co.zw`
 - Enforce key-based SSH only on VPS
 - Restrict public ingress to `80/443`; keep Postgres/MinIO private
 - Rotate secrets before first production deploy
