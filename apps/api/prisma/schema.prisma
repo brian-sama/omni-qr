@@ -110,8 +110,6 @@ model Meeting {
   title          String
   description    String?
   status         MeetingStatus @default(ACTIVE)
-  accessType     AccessType    @default(PUBLIC)
-  passwordHash   String?
   liveMode       Boolean       @default(false)
   startsAt       DateTime?
   expiresAt      DateTime?
@@ -122,6 +120,7 @@ model Meeting {
   organization    Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   createdBy       User                   @relation("MeetingCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   files           File[]
+  accessPolicy    MeetingAccessPolicy?
   scanEvents      ScanEvent[]
   auditLogs       AuditLog[]
   qrConfig        QrConfig?
@@ -130,6 +129,21 @@ model Meeting {
   @@index([organizationId, createdAt(sort: Desc)])
   @@index([organizationId, status])
   @@index([expiresAt])
+}
+
+model MeetingAccessPolicy {
+  id             String     @id @default(uuid())
+  meetingId      String     @unique
+  accessType     AccessType @default(PUBLIC)
+  passwordHash   String?
+  accessStartsAt DateTime?
+  accessEndsAt   DateTime?
+  oneTimeAccess  Boolean    @default(false)
+  viewOnly       Boolean    @default(false)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
 }
 
 model File {
@@ -248,4 +262,3 @@ model Invite {
 
   @@index([organizationId])
 }
-
