@@ -17,8 +17,41 @@ const steps = [
 ];
 
 export default function LandingPage() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Scan Suite",
+    "url": "https://scansuite.co.zw",
+    "logo": "https://scansuite.co.zw/logo.png",
+    "description": "Enterprise-grade QR document delivery for high-stakes meetings.",
+    "sameAs": [
+      "https://twitter.com/scansuite",
+      "https://linkedin.com/company/scansuite"
+    ]
+  };
+
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Scan Suite",
+    "url": "https://scansuite.co.zw",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://scansuite.co.zw/search?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
+
   return (
     <div className="min-h-screen bg-transparent">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+      />
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
         <div className="flex items-center gap-3">
           <div className="grid h-10 w-10 place-items-center rounded-md bg-primary text-primary-foreground shadow-soft">
@@ -86,8 +119,8 @@ export default function LandingPage() {
           <div className="absolute -right-6 -top-6 hidden h-20 w-20 rounded-full bg-secondary/30 blur-2xl sm:block" />
           <div className="rounded-lg border border-border bg-background/80 p-4">
             <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground">Live demo QR</p>
-            <div className="mt-4 grid place-items-center rounded-lg border border-border bg-card p-4">
-              <div className="relative h-44 w-44 rounded-md border border-border bg-gradient-to-br from-slate-900 to-slate-800 p-4">
+            <div className="mt-4 grid place-items-center rounded-lg border border-border bg-card p-4" aria-label="Interactive QR Code Demo">
+              <div className="relative h-44 w-44 rounded-md border border-border bg-gradient-to-br from-slate-900 to-slate-800 p-4" role="img" aria-label="Sample Scan Suite QR Code">
                 <div className="grid h-full w-full grid-cols-7 gap-1">
                   {Array.from({ length: 49 }).map((_, idx) => (
                     <div
