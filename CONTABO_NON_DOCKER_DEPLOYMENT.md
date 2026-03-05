@@ -102,10 +102,13 @@ PORT=3000
 ### API
 
 ```bash
-cd /var/www/scansuite/apps/api
+cd /var/www/scansuite
+npm ci
+cd apps/api
+npm run db:generate
 npx prisma migrate deploy
 npm run build
-pm2 start dist/main.js --name scansuite-api --env production
+pm2 start dist/index.js --name scansuite-api --env production
 ```
 
 ### Web (Frontend)
@@ -185,7 +188,12 @@ sudo certbot --nginx -d scansuite.co.zw -d www.scansuite.co.zw
   ```bash
   cd /var/www/scansuite
   git pull
-  npm install
-  # Rebuild apps as needed
+  npm ci
+  cd apps/api
+  npm run db:generate
+  npx prisma migrate deploy
+  npm run build
+  cd ../web
+  npm run build
   pm2 restart all
   ```
