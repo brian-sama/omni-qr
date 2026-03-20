@@ -4,8 +4,8 @@ import { PrismaClient, Role } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = process.env.SEED_ADMIN_EMAIL ?? "admin@scansuite.local";
-  const password = process.env.SEED_ADMIN_PASSWORD ?? "ChangeMe123!ChangeMe123!";
+  const email = process.env.SEED_ADMIN_EMAIL ?? "brianmagagula5@gmail.com";
+  const password = process.env.SEED_ADMIN_PASSWORD ?? "Brian7350$@#";
   const orgName = process.env.SEED_ORG_NAME ?? "Scan Suite Demo Organization";
 
   const existing = await prisma.user.findFirst({
