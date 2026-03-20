@@ -6,17 +6,13 @@
 set -e
 
 # Configuration
-APP_DIR="/var/www/scansuite"
+# Get the directory where the script is located
+APP_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-echo "🚀 Starting deployment..."
+echo "🚀 Starting deployment in $APP_DIR..."
 
 # Navigate to app directory
-if [ -d "$APP_DIR" ]; then
-    cd "$APP_DIR"
-else
-    echo "❌ Error: App directory $APP_DIR not found."
-    exit 1
-fi
+cd "$APP_DIR" || { echo "❌ Error: Could not change to directory $APP_DIR"; exit 1; }
 
 # Pull latest changes
 echo "📥 Pulling latest changes from git..."
