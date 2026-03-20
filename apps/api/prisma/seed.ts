@@ -23,6 +23,7 @@ async function main() {
   const organization = await prisma.organization.create({
     data: {
       name: orgName,
+      slug: "demo",
       users: {
         create: {
           email,
