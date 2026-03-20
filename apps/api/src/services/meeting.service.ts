@@ -46,7 +46,7 @@ function mapMeetingWithMetrics(meeting: {
 }
 
 export async function listMeetingsForOrganization(organizationId: string) {
-  const meetings = await prisma.meeting.findMany({
+  const meetings = await (prisma.meeting.findMany as any)({
     where: { organizationId },
     include: {
       accessPolicy: {
@@ -64,7 +64,7 @@ export async function listMeetingsForOrganization(organizationId: string) {
     orderBy: {
       createdAt: "desc"
     }
-  }) as any[];
+  });
 
   return meetings.map(mapMeetingWithMetrics);
 }
@@ -79,7 +79,7 @@ export async function createMeeting(
     ? await bcrypt.hash(payload.accessPolicy.password, 12)
     : null;
 
-  const meeting = await prisma.meeting.create({
+  const meeting = await (prisma.meeting.create as any)({
     data: {
       organizationId,
       createdById: userId,
@@ -102,7 +102,7 @@ export async function createMeeting(
           viewOnly: (payload.accessPolicy as any)?.viewOnly ?? false
         }
       }
-    } as any,
+    },
     include: {
       accessPolicy: true,
       _count: {
@@ -112,7 +112,7 @@ export async function createMeeting(
         }
       }
     }
-  }) as any;
+  });
 
   await writeAuditLog({
     organizationId,
@@ -131,7 +131,7 @@ export async function createMeeting(
 }
 
 export async function getMeetingById(organizationId: string, meetingId: string) {
-  const meeting = await prisma.meeting.findFirst({
+  const meeting = await (prisma.meeting.findFirst as any)({
     where: {
       id: meetingId,
       organizationId
@@ -158,7 +158,7 @@ export async function getMeetingById(organizationId: string, meetingId: string) 
         }
       }
     }
-  }) as any;
+  });
 
   if (!meeting) {
     return null;
@@ -193,10 +193,10 @@ export async function patchMeeting(
   meetingId: string,
   payload: PatchMeetingInput
 ) {
-  const current = await prisma.meeting.findFirst({
+  const current = await (prisma.meeting.findFirst as any)({
     where: { id: meetingId, organizationId },
     include: { accessPolicy: true }
-  }) as any;
+  });
 
   if (!current) {
     return null;
@@ -210,7 +210,7 @@ export async function patchMeeting(
     ? await bcrypt.hash(payload.accessPolicy.password, 12)
     : undefined;
 
-  const meeting = await prisma.meeting.update({
+  const meeting = await (prisma.meeting.update as any)({
     where: { id: meetingId },
     data: {
       title: payload.title,
@@ -248,7 +248,7 @@ export async function patchMeeting(
             }
           }
         : undefined
-    } as any,
+    },
     include: {
       accessPolicy: {
         select: {
@@ -262,7 +262,7 @@ export async function patchMeeting(
         }
       }
     }
-  }) as any;
+  });
 
   await writeAuditLog({
     organizationId,

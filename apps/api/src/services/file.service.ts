@@ -39,7 +39,7 @@ export async function createPresignedUpload(
     throw new Error(`File exceeds max size of ${env.MAX_FILE_SIZE_MB}MB`);
   }
 
-  const meeting = await prisma.meeting.findFirst({
+  const meeting = await (prisma.meeting.findFirst as any)({
     where: {
       id: payload.meetingId,
       organizationId
@@ -47,13 +47,13 @@ export async function createPresignedUpload(
     include: {
       accessPolicy: true
     }
-  }) as any;
+  });
 
   if (!meeting) {
     throw new Error("Meeting not found");
   }
 
-  const existingFile = await prisma.file.findFirst({
+  const existingFile = await (prisma.file.findFirst as any)({
     where: {
       organizationId,
       meetingId: payload.meetingId,
@@ -67,7 +67,7 @@ export async function createPresignedUpload(
         take: 1
       }
     }
-  }) as any;
+  });
 
   const nextVersion = existingFile?.versions?.[0]?.version ? existingFile.versions[0].version + 1 : 1;
   const fileId = existingFile?.id ?? crypto.randomUUID();
@@ -151,7 +151,7 @@ export async function completeUpload(
   fileId: string,
   payload: CompleteUploadInput
 ) {
-  const versionRecord = await prisma.fileVersion.findFirst({
+  const versionRecord = await (prisma.fileVersion.findFirst as any)({
     where: {
       id: payload.versionId,
       fileId,
@@ -166,7 +166,7 @@ export async function completeUpload(
         }
       }
     }
-  }) as any;
+  });
 
   if (!versionRecord) {
     throw new Error("Upload version not found");
@@ -238,7 +238,7 @@ export async function completeUpload(
 }
 
 export async function createDownloadUrl(organizationId: string, userId: string, fileId: string) {
-  const file = await prisma.file.findFirst({
+  const file = await (prisma.file.findFirst as any)({
     where: {
       id: fileId,
       organizationId
@@ -259,7 +259,7 @@ export async function createDownloadUrl(organizationId: string, userId: string, 
         take: 1
       }
     }
-  }) as any;
+  });
 
   if (!file || !file.versions || file.versions.length === 0) {
     throw new Error("File not found");
@@ -301,7 +301,7 @@ export async function createPublicDownloadUrl(
   meetingId: string,
   fileId: string
 ) {
-  const file = await prisma.file.findFirst({
+  const file = await (prisma.file.findFirst as any)({
     where: {
       id: fileId,
       organizationId,
@@ -318,7 +318,7 @@ export async function createPublicDownloadUrl(
         take: 1
       }
     }
-  }) as any;
+  });
 
   if (!file || !file.versions || file.versions.length === 0) {
     throw new Error("File not found");

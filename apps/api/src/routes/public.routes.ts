@@ -21,7 +21,7 @@ router.use(attachPublicAccess);
 
 router.get("/meetings/:slug", async (request, response, next) => {
   try {
-    const meeting = await prisma.meeting.findUnique({
+    const meeting = await (prisma.meeting.findUnique as any)({
       where: {
         slug: request.params.slug
       },
@@ -52,7 +52,7 @@ router.get("/meetings/:slug", async (request, response, next) => {
           }
         }
       }
-    }) as any;
+    });
 
     if (!meeting) {
       response.status(404).json({ error: "Meeting not found" });
@@ -157,14 +157,14 @@ router.post("/meetings/:slug/verify", async (request, response, next) => {
       return;
     }
 
-    const meeting = await prisma.meeting.findUnique({
+    const meeting = await (prisma.meeting.findUnique as any)({
       where: {
         slug: request.params.slug
       },
       include: {
         accessPolicy: true
       }
-    }) as any;
+    });
 
     if (!meeting) {
       response.status(404).json({ error: "Meeting not found" });
@@ -215,7 +215,7 @@ router.get("/files/:fileId/access-url", async (request, response, next) => {
       return;
     }
 
-    const file = await prisma.file.findFirst({
+    const file = await (prisma.file.findFirst as any)({
       where: {
         id: request.params.fileId,
         organizationId: request.publicAccess.organizationId,
@@ -228,7 +228,7 @@ router.get("/files/:fileId/access-url", async (request, response, next) => {
           }
         }
       }
-    }) as any;
+    });
 
     if (!file) {
       response.status(404).json({ error: "File not found" });
