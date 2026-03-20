@@ -16,7 +16,9 @@ cd "$APP_DIR" || { echo "❌ Error: Could not change to directory $APP_DIR"; exi
 
 # Pull latest changes
 echo "📥 Pulling latest changes from git..."
-git pull origin main
+# Using --rebase to avoid merge commits on server
+# Alternatively, use 'git fetch origin && git reset --hard origin/main' if you want to force overwrite local server changes
+git pull --rebase origin main
 
 # Install dependencies (Root and Workspaces)
 echo "📦 Installing dependencies..."
