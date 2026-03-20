@@ -1,9 +1,12 @@
+const path = require('path');
+
 module.exports = {
   apps: [
     {
       name: 'scan-suite-api',
-      script: 'dist/index.js',
-      cwd: 'apps/api',
+      cwd: path.resolve(__dirname, 'apps/api'),
+      script: 'node',
+      args: 'dist/index.js',
       env_production: {
         NODE_ENV: 'production',
         PORT: 4000
@@ -11,11 +14,12 @@ module.exports = {
     },
     {
       name: 'scan-suite-web',
+      cwd: path.resolve(__dirname, 'apps/web'),
       script: 'npm',
-      args: 'run start -- -p 3000',
-      cwd: 'apps/web',
+      args: 'run start',
       env_production: {
-        NODE_ENV: 'production'
+        NODE_ENV: 'production',
+        PORT: 3000
       }
     }
   ]

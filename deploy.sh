@@ -42,10 +42,14 @@ npm run build
 cd ../..
 
 # Restart Services with PM2
-echo "🔄 Reloading services with PM2..."
+echo "🔄 Updating services with PM2..."
+# We try to delete the old service names if they exist to avoid port conflicts during the rename
+pm2 delete scansuite-api scansuite-web 2>/dev/null || true
+
+# Reload/Start the new services
 pm2 reload ecosystem.config.cjs --env production || pm2 start ecosystem.config.cjs --env production
 
-# Save PM2 state
+# Prune any defunct processes and save
 echo "💾 Saving PM2 state..."
 pm2 save
 
