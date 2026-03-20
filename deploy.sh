@@ -15,10 +15,11 @@ echo "🚀 Starting deployment in $APP_DIR..."
 cd "$APP_DIR" || { echo "❌ Error: Could not change to directory $APP_DIR"; exit 1; }
 
 # Pull latest changes
-echo "📥 Pulling latest changes from git..."
-# Using --rebase to avoid merge commits on server
-# Alternatively, use 'git fetch origin && git reset --hard origin/main' if you want to force overwrite local server changes
-git pull --rebase origin main
+echo "📥 Syncing with latest changes from git..."
+# Forcing the server to match the remote branch (defaulting to main)
+# This discards any local changes on the server, which is best for production-ready deployments.
+git fetch origin main
+git reset --hard origin/main
 
 # Install dependencies (Root and Workspaces)
 echo "📦 Installing dependencies..."
