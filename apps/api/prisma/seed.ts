@@ -7,33 +7,34 @@ async function main() {
   const email = process.env.SEED_ADMIN_EMAIL ?? "brianmagagula5@gmail.com";
   const password = process.env.SEED_ADMIN_PASSWORD ?? "Brian7350$@#";
   const orgName = process.env.SEED_ORG_NAME ?? "Scan Suite Demo Organization";
+  const slug = "demo";
 
-  const existing = await prisma.user.findFirst({
-    where: { email },
-    include: { organization: true }
+  const existingUser = await prisma.user.findFirst({
+    where: { email }
   });
 
-  if (existing) {
+  if (existingUser) {
     console.log(`Seed skipped. User already exists: ${email}`);
     return;
   }
 
+  const organization = await prisma.organization.upsert({
+    where: { slug },
+    update: {},
+    create: {
+      name: orgName,
+      slug,
+    }
+  });
+
   const passwordHash = await bcrypt.hash(password, 12);
 
-  const organization = await prisma.organization.create({
+  await prisma.user.create({
     data: {
-      name: orgName,
-      slug: "demo",
-      users: {
-        create: {
-          email,
-          passwordHash,
-          role: Role.OWNER
-        }
-      }
-    },
-    include: {
-      users: true
+      email,
+      passwordHash,
+      role: Role.OWNER,
+      organizationId: organization.id
     }
   });
 
