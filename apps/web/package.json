@@ -1,5 +1,5 @@
 {
-  "name": "@omniqr/web",
+  "name": "@scan-suite/web",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -13,7 +13,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@omniqr/shared": "1.0.0",
+    "@scan-suite/shared": "1.0.0",
     "@sentry/nextjs": "^10.19.0",
     "@tanstack/react-query": "^5.89.0",
     "clsx": "^2.1.1",

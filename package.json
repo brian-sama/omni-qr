@@ -1,26 +1,26 @@
 {
-  "name": "scan-suite-enterprise",
+  "name": "Scan-Suite",
   "private": true,
   "version": "1.0.0",
-  "description": "Scan Suite enterprise monorepo",
+  "description": "Scan-Suite enterprise monorepo",
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently -n api,web -c cyan,magenta \"npm run dev --workspace @omniqr/api\" \"npm run dev --workspace @omniqr/web\"",
-    "dev:api": "npm run dev --workspace @omniqr/api",
-    "dev:web": "npm run dev --workspace @omniqr/web",
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm run dev --workspace @scan-suite/api\" \"npm run dev --workspace @scan-suite/web\"",
+    "dev:api": "npm run dev --workspace @scan-suite/api",
+    "dev:web": "npm run dev --workspace @scan-suite/web",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "test:unit": "npm run test:unit --workspace @omniqr/api",
-    "test:integration": "npm run test:integration --workspace @omniqr/api",
-    "test:e2e": "npm run test:e2e --workspace @omniqr/web",
-    "db:generate": "npm run db:generate --workspace @omniqr/api",
-    "db:migrate": "npm run db:migrate --workspace @omniqr/api",
-    "db:seed": "npm run db:seed --workspace @omniqr/api"
+    "test:unit": "npm run test:unit --workspace @scan-suite/api",
+    "test:integration": "npm run test:integration --workspace @scan-suite/api",
+    "test:e2e": "npm run test:e2e --workspace @scan-suite/web",
+    "db:generate": "npm run db:generate --workspace @scan-suite/api",
+    "db:migrate": "npm run db:migrate --workspace @scan-suite/api",
+    "db:seed": "npm run db:seed --workspace @scan-suite/api"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

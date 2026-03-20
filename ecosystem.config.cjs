@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'scansuite-api',
+      name: 'scan-suite-api',
       script: 'dist/index.js',
       cwd: 'apps/api',
       env_production: {
@@ -10,7 +10,7 @@ module.exports = {
       }
     },
     {
-      name: 'scansuite-web',
+      name: 'scan-suite-web',
       script: 'npm',
       args: 'run start -- -p 3000',
       cwd: 'apps/web',

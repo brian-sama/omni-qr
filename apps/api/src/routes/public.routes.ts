@@ -52,7 +52,7 @@ router.get("/meetings/:slug", async (request, response, next) => {
           }
         }
       }
-    });
+    }) as any;
 
     if (!meeting) {
       response.status(404).json({ error: "Meeting not found" });
@@ -128,12 +128,12 @@ router.get("/meetings/:slug", async (request, response, next) => {
         title: meeting.title,
         description: meeting.description,
         expiresAt: meeting.expiresAt,
-        accessType: meeting.accessPolicy?.accessType ?? "PUBLIC"
+        accessType: (meeting.accessPolicy as any)?.accessType ?? "PUBLIC"
       },
       organization: meeting.organization,
       scanCount,
-      files: meeting.files
-        .filter((file) => file.versions[0])
+      files: (meeting.files as any[])
+        .filter((file) => file.versions && file.versions[0])
         .map((file) => ({
           id: file.id,
           name: file.name,
@@ -164,19 +164,19 @@ router.post("/meetings/:slug/verify", async (request, response, next) => {
       include: {
         accessPolicy: true
       }
-    });
+    }) as any;
 
     if (!meeting) {
       response.status(404).json({ error: "Meeting not found" });
       return;
     }
 
-    if (meeting.accessPolicy?.accessType !== "PASSWORD" || !meeting.accessPolicy.passwordHash) {
+    if ((meeting.accessPolicy as any)?.accessType !== "PASSWORD" || !(meeting.accessPolicy as any).passwordHash) {
       response.status(400).json({ error: "Meeting is not password protected" });
       return;
     }
 
-    const passwordMatches = await bcrypt.compare(parsed.data.password, meeting.accessPolicy.passwordHash);
+    const passwordMatches = await bcrypt.compare(parsed.data.password, (meeting.accessPolicy as any).passwordHash);
 
     if (!passwordMatches) {
       response.status(401).json({ error: "Invalid password" });
@@ -228,7 +228,7 @@ router.get("/files/:fileId/access-url", async (request, response, next) => {
           }
         }
       }
-    });
+    }) as any;
 
     if (!file) {
       response.status(404).json({ error: "File not found" });
@@ -236,7 +236,7 @@ router.get("/files/:fileId/access-url", async (request, response, next) => {
     }
 
     const policyDecision = evaluateAccessPolicy({
-      policy: file.meeting.accessPolicy,
+      policy: (file.meeting as any).accessPolicy,
       bypassPassword: true
     });
 
