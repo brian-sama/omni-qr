@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createMeetingSchema, patchMeetingSchema } from "@omniqr/shared";
+import { createMeetingSchema, patchMeetingSchema } from "@scan-suite/shared";
 import { requireAuth } from "../middleware/auth";
 import { requireRole } from "../middleware/rbac";
 import { validateBody } from "../middleware/validate";

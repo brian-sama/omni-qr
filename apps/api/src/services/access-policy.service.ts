@@ -1,7 +1,7 @@
-import type { AccessType, MeetingAccessPolicy } from "@prisma/client";
+import type { AccessType } from "@prisma/client";
 
 type AccessCheckInput = {
-  policy: MeetingAccessPolicy | null;
+  policy: any | null;
   now?: Date;
   bypassPassword?: boolean;
 };

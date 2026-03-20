@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["@omniqr/shared"],
+  transpilePackages: ["@scan-suite/shared"],
   experimental: {
     optimizePackageImports: ["lucide-react"]
   }

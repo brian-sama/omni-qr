@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { AuditAction, FileVersionStatus } from "@prisma/client";
-import type { CompleteUploadInput, PresignUploadInput } from "@omniqr/shared";
+import type { CompleteUploadInput, PresignUploadInput } from "@scan-suite/shared";
 import { env } from "../config/env";
 import { prisma } from "../lib/prisma";
 import { s3 } from "../lib/s3";
@@ -47,7 +47,7 @@ export async function createPresignedUpload(
     include: {
       accessPolicy: true
     }
-  });
+  }) as any;
 
   if (!meeting) {
     throw new Error("Meeting not found");
@@ -67,7 +67,7 @@ export async function createPresignedUpload(
         take: 1
       }
     }
-  });
+  }) as any;
 
   const nextVersion = existingFile?.versions?.[0]?.version ? existingFile.versions[0].version + 1 : 1;
   const fileId = existingFile?.id ?? crypto.randomUUID();
@@ -166,7 +166,7 @@ export async function completeUpload(
         }
       }
     }
-  });
+  }) as any;
 
   if (!versionRecord) {
     throw new Error("Upload version not found");
@@ -259,9 +259,9 @@ export async function createDownloadUrl(organizationId: string, userId: string, 
         take: 1
       }
     }
-  });
+  }) as any;
 
-  if (!file || file.versions.length === 0) {
+  if (!file || !file.versions || file.versions.length === 0) {
     throw new Error("File not found");
   }
 
@@ -318,9 +318,9 @@ export async function createPublicDownloadUrl(
         take: 1
       }
     }
-  });
+  }) as any;
 
-  if (!file || file.versions.length === 0) {
+  if (!file || !file.versions || file.versions.length === 0) {
     throw new Error("File not found");
   }
 

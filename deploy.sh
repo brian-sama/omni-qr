@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Scan Suite - Non-Docker Deployment Script
+# Scan-Suite - Non-Docker Deployment Script
 # This script automates the deployment process on the VPS.
 
 set -e
@@ -9,7 +9,7 @@ set -e
 # Get the directory where the script is located
 APP_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-echo "🚀 Starting deployment in $APP_DIR..."
+echo "🚀 Starting Scan-Suite deployment in $APP_DIR..."
 
 # Navigate to app directory
 cd "$APP_DIR" || { echo "❌ Error: Could not change to directory $APP_DIR"; exit 1; }

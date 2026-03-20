@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { Router } from "express";
 import { AuditAction } from "@prisma/client";
-import { loginSchema, registerSchema } from "@omniqr/shared";
+import { loginSchema, registerSchema } from "@scan-suite/shared";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
