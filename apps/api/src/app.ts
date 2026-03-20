@@ -4,7 +4,7 @@ import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { env } from "./config/env";
-import { requestLogger } from "./lib/logger";
+import { logger, requestLogger } from "./lib/logger";
 import { authRouter } from "./routes/auth.routes";
 import { fileRouter } from "./routes/file.routes";
 import { meetingRouter } from "./routes/meeting.routes";
