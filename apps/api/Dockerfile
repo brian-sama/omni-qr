@@ -40,8 +40,9 @@ COPY packages/shared/package*.json ./packages/shared/
 # Install production dependencies only
 RUN npm install --omit=dev
 
-# Copy build output and prisma
+# Copy build output, prisma and src (for tsx resolution)
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
+COPY --from=builder /app/apps/api/src ./apps/api/src
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 COPY --from=builder /app/packages/shared ./packages/shared
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
@@ -53,4 +54,4 @@ ENV PORT=4000
 EXPOSE 4000
 
 # Start the application
-CMD ["node", "apps/api/dist/index.js"]
+CMD ["npm", "run", "start", "-w", "@scan-suite/api"]
