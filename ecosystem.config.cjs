@@ -9,7 +9,7 @@ module.exports = {
       args: 'dist/index.js',
       env_production: {
         NODE_ENV: 'production',
-        PORT: 4000
+        PORT: 4100
       }
     },
     {
@@ -19,7 +19,7 @@ module.exports = {
       args: 'run start',
       env_production: {
         NODE_ENV: 'production',
-        PORT: 3000
+        PORT: 3100
       }
     }
   ]
