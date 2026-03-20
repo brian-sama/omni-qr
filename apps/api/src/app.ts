@@ -44,13 +44,26 @@ export function createApp() {
     legacyHeaders: false
   });
 
+  // Diagnostic log to see exactly what Express receives
+  app.use((req, _res, next) => {
+    logger.debug({ method: req.method, url: req.url, path: req.path }, "API Request received");
+    next();
+  });
+
   app.use("/health", healthRouter);
-  app.use("/api/v1/auth", authRateLimiter, authRouter);
-  app.use("/api/v1/meetings", meetingRouter);
-  app.use("/api/v1/files", fileRouter);
-  app.use("/api/v1/public", publicRateLimiter, publicRouter);
-  app.use("/api/v1/organization", organizationRouter);
-  app.use("/api/v1/analytics", analyticsRouter);
+
+  // Versioned API Router
+  const apiV1 = express.Router();
+  apiV1.use("/auth", authRateLimiter, authRouter);
+  apiV1.use("/meetings", meetingRouter);
+  apiV1.use("/files", fileRouter);
+  apiV1.use("/public", publicRateLimiter, publicRouter);
+  apiV1.use("/organization", organizationRouter);
+  apiV1.use("/analytics", analyticsRouter);
+
+  // Mount at both paths to be resilient to Nginx configuration differences
+  app.use("/api/v1", apiV1);
+  app.use("/v1", apiV1);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
