@@ -79,6 +79,7 @@ export default function OnboardingPage() {
                   value={primaryColor}
                   onChange={(event) => setPrimaryColor(event.target.value)}
                   className="h-10 w-14 rounded-md border border-border"
+                  title="Choose organization primary color"
                 />
               </div>
             </div>
@@ -159,6 +160,7 @@ export default function OnboardingPage() {
                 value={accessType}
                 onChange={(event) => setAccessType(event.target.value as "PUBLIC" | "PASSWORD" | "PRIVATE")}
                 className="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+                title="Select meeting access type"
               >
                 <option value="PUBLIC">Public</option>
                 <option value="PASSWORD">Password protected</option>
