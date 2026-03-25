@@ -30,7 +30,7 @@ echo "⚙️ Setting up API..."
 cd apps/api
 npm run db:generate
 echo "🔄 Running database migrations..."
-npx prisma migrate deploy
+npm run db:migrate
 echo "🏗️ Building API..."
 npm run build
 cd ../..
