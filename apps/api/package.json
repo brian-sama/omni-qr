@@ -12,10 +12,10 @@
     "test": "vitest run",
     "test:unit": "vitest run src/tests/unit",
     "test:integration": "vitest run src/tests/integration",
-    "db:generate": "prisma generate --env-file ../../.env",
-    "db:migrate": "prisma migrate deploy --env-file ../../.env",
-    "db:migrate:dev": "prisma migrate dev --env-file ../../.env",
-    "db:seed": "prisma db seed --env-file ../../.env"
+    "db:generate": "npx dotenv-cli -e ../../.env -- prisma generate",
+    "db:migrate": "npx dotenv-cli -e ../../.env -- prisma migrate deploy",
+    "db:migrate:dev": "npx dotenv-cli -e ../../.env -- prisma migrate dev",
+    "db:seed": "npx dotenv-cli -e ../../.env -- prisma db seed"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -49,6 +49,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.14.0",
     "@types/supertest": "^6.0.3",
+    "dotenv-cli": "^8.0.0",
     "prisma": "^6.16.1",
     "supertest": "^7.1.4",
     "typescript": "^5.8.2",
