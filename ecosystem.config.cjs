@@ -5,8 +5,8 @@ module.exports = {
     {
       name: 'scan-suite-api',
       cwd: path.resolve(__dirname, 'apps/api'),
-      script: 'node',
-      args: 'dist/index.js',
+      script: 'npm',
+      args: 'run start',
       env_production: {
         NODE_ENV: 'production',
         PORT: 4100

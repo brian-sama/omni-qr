@@ -67,7 +67,7 @@ exit
 ```bash
 mkdir -p /var/www
 cd /var/www
-git clone git@github.com:brian-sama/omni-qr.git scansuite
+git clone git@github.com:brian-sama/scan-suite.git scansuite
 cd scansuite
 npm install
 ```

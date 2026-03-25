@@ -8,7 +8,7 @@ This guide deploys **Scan Suite** to your Contabo VPS (`89.116.26.24`) and sets 
 Repository:
 
 ```bash
-git@github.com:brian-sama/omni-qr.git
+git@github.com:brian-sama/scan-suite.git
 ```
 
 ## 1) VPS bootstrap
@@ -62,7 +62,7 @@ Both should resolve to `89.116.26.24`.
 ```bash
 mkdir -p /opt
 cd /opt
-git clone git@github.com:brian-sama/omni-qr.git scan-suite
+git clone git@github.com:brian-sama/scan-suite.git scan-suite
 cd /opt/scan-suite
 ```
 

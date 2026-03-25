@@ -6,8 +6,8 @@ const prisma = new PrismaClient();
 async function main() {
   const email = process.env.SEED_ADMIN_EMAIL ?? "brianmagagula5@gmail.com";
   const password = process.env.SEED_ADMIN_PASSWORD ?? "Brian7350$@#";
-  const orgName = process.env.SEED_ORG_NAME ?? "Scan Suite Demo Organization";
-  const slug = "demo";
+  const orgName = process.env.SEED_ORG_NAME ?? "Scan Suite";
+  const slug = "scansuite";
 
   const existingUser = await prisma.user.findFirst({
     where: { email }
