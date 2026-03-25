@@ -136,8 +136,14 @@ export default function OnboardingPage() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">Date</label>
-              <Input type="datetime-local" value={meetingDate} onChange={(event) => setMeetingDate(event.target.value)} />
+              <label className="mb-1 block text-sm font-medium text-foreground">Date and Time</label>
+              <Input 
+                type="datetime-local" 
+                value={meetingDate} 
+                onChange={(event) => setMeetingDate(event.target.value)} 
+                step="60"
+                required
+              />
             </div>
 
             <div>

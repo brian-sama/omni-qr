@@ -65,7 +65,10 @@ router.patch("/", requireAuth, async (request, response, next) => {
     });
 
     response.status(200).json({ organization });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.code === 'P2025') {
+      console.error(`[Error] Organization update failed: Record not found for id ${request.user!.organizationId}`);
+    }
     next(error);
   }
 });
