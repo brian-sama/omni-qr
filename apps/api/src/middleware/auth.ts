@@ -43,12 +43,26 @@ function readPublicToken(request: Request): string | null {
 }
 
 async function hydrateUserFromPayload(payload: AccessTokenPayload) {
-  // Bypassing DB for local frontend testing
+  const user = await prisma.user.findUnique({
+    where: { id: payload.userId },
+    select: {
+      id: true,
+      email: true,
+      organizationId: true,
+      role: true,
+      isActive: true
+    }
+  });
+
+  if (!user || !user.isActive || user.organizationId !== payload.organizationId) {
+    return null;
+  }
+
   return {
-    id: payload.userId,
-    email: payload.email || "demo@example.com",
-    organizationId: payload.organizationId,
-    role: payload.role as Role
+    id: user.id,
+    email: user.email,
+    organizationId: user.organizationId,
+    role: user.role
   };
 }
 

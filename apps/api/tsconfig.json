@@ -5,7 +5,10 @@
     "types": ["node", "vitest/globals"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@scan-suite/shared": ["../../packages/shared/src/index.ts"]
+    }
   },
   "include": [
     "src/**/*.ts"
