@@ -75,7 +75,7 @@ export default function DashboardPage() {
                 <div>
                   <p className="text-sm font-medium text-foreground">{meeting.title}</p>
                   <p className="text-xs text-muted-foreground">
-                    {meeting.fileCount} files • {meeting.scanCount} scans • {formatDate(meeting.createdAt)}
+                    {meeting.fileCount} files | {meeting.scanCount} scans | {formatDate(meeting.createdAt)}
                   </p>
                 </div>
                 <span className="text-xs uppercase tracking-[0.1em] text-muted-foreground">{meeting.status}</span>
@@ -90,7 +90,7 @@ export default function DashboardPage() {
           </div>
         )}
       </Card>
-    </div >
+    </div>
   );
 }
 
@@ -116,4 +116,3 @@ function MetricCard({
     </Card>
   );
 }
-

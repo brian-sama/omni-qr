@@ -77,34 +77,16 @@ npm run test
 
 ## Production Deployment
 
-### Container deployment
+Use the root `docker-compose.yml` together with `.env.production`.
+
+Quick start:
 
 ```bash
-docker compose -f infra/compose/docker-compose.production.yml up -d --build
+cp .env.production.example .env.production
+./infra/scripts/vps-deploy.sh
 ```
 
-### Operational scripts
-
-- Deploy script: `infra/scripts/deploy.sh`
-  - Pulls infra images, then conditionally pulls app images when `API_IMAGE`/`WEB_IMAGE` are exported
-  - Falls back to building app services from source if app image vars are not set
-- Backup script: `infra/scripts/backup.sh`
-- Initial Let's Encrypt setup: `infra/scripts/setup-letsencrypt.sh`
-- Let's Encrypt renewal: `infra/scripts/renew-letsencrypt.sh`
-
-### CI/CD
-
-- PR CI: `.github/workflows/ci.yml`
-- Main branch CD: `.github/workflows/cd.yml`
-
-Set required repository secrets:
-
-- `VPS_HOST`
-- `VPS_USER`
-- `VPS_SSH_PORT`
-- `VPS_SSH_KEY`
-- `GHCR_USER`
-- `GHCR_PAT`
+Detailed VPS steps, Nginx setup, database/seed commands, and port choices are documented in [DEPLOY_DOCKER_VPS.md](./DEPLOY_DOCKER_VPS.md).
 
 ## Security/Infra Notes
 

@@ -172,6 +172,18 @@ export async function completeUpload(
     throw new Error("Upload version not found");
   }
 
+  if (versionRecord.status !== FileVersionStatus.PENDING) {
+    throw new Error("Upload version is no longer pending");
+  }
+
+  if (
+    versionRecord.size !== payload.size ||
+    versionRecord.mimeType !== payload.mimeType ||
+    versionRecord.sha256 !== payload.sha256
+  ) {
+    throw new Error("Upload metadata does not match the presigned request");
+  }
+
   const updated = await prisma.$transaction(async (transaction) => {
     const version = await transaction.fileVersion.update({
       where: {
@@ -244,11 +256,6 @@ export async function createDownloadUrl(organizationId: string, userId: string, 
       organizationId
     },
     include: {
-      meeting: {
-        include: {
-          accessPolicy: true
-        }
-      },
       versions: {
         where: {
           status: FileVersionStatus.READY

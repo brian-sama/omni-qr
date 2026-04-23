@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import { Router } from "express";
 import slugify from "slugify";
@@ -23,6 +24,48 @@ import { writeAuditLog } from "../services/audit.service";
 
 const router = Router();
 
+function buildSessionExpiryDate(ttl: string): Date {
+  return new Date(Date.now() + ttlToMs(ttl));
+}
+
+async function rotateRefreshSession(
+  sessionId: string,
+  userId: string,
+  presentedRefreshToken: string,
+  nextRefreshToken: string
+): Promise<boolean> {
+  const session = await prisma.session.findFirst({
+    where: {
+      id: sessionId,
+      userId,
+      revokedAt: null
+    }
+  });
+
+  if (!session || session.expiresAt <= new Date()) {
+    return false;
+  }
+
+  if (session.refreshTokenHash !== hashToken(presentedRefreshToken)) {
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: { revokedAt: new Date() }
+    });
+    return false;
+  }
+
+  await prisma.session.update({
+    where: { id: sessionId },
+    data: {
+      refreshTokenHash: hashToken(nextRefreshToken),
+      expiresAt: buildSessionExpiryDate(env.REFRESH_TOKEN_TTL),
+      revokedAt: null
+    }
+  });
+
+  return true;
+}
+
 function setAuthCookies(response: any, accessToken: string, refreshToken: string) {
   response.cookie(COOKIE_NAMES.access, accessToken, buildAccessCookieOptions());
   response.cookie(COOKIE_NAMES.refresh, refreshToken, buildRefreshCookieOptions());
@@ -43,24 +86,11 @@ router.post("/register", validateBody(registerSchema), async (request, response,
   try {
     const { name, email, password } = request.body;
 
-    const existingUser = await prisma.user.findUnique({
-      where: {
-        organizationId_email: {
-          email,
-          organizationId: "placeholder" // This @@unique constraint is actually [organizationId, email]
-        }
-      }
-    });
-
-    // Wait, let's just check if email exists globally for now to simplify,
-    // or better, check if the email is already used in ANY organization if that's the intent.
-    // The schema says @@unique([organizationId, email]), so a user can belong to multiple orgs theoretically?
-    // But our login logic only looks for email.
-    const userExists = await prisma.user.findFirst({
+    const existingUser = await prisma.user.findFirst({
       where: { email }
     });
 
-    if (userExists) {
+    if (existingUser) {
       response.status(409).json({ error: "User with this email already exists" });
       return;
     }
@@ -96,10 +126,20 @@ router.post("/register", validateBody(registerSchema), async (request, response,
       email: result.user.email
     });
 
+    const sessionId = crypto.randomUUID();
     const refreshToken = signRefreshToken({
       userId: result.user.id,
       organizationId: result.org.id,
-      sessionId: "initial_session" // We could create a real session here
+      sessionId
+    });
+
+    await prisma.session.create({
+      data: {
+        id: sessionId,
+        userId: result.user.id,
+        refreshTokenHash: hashToken(refreshToken),
+        expiresAt: buildSessionExpiryDate(env.REFRESH_TOKEN_TTL)
+      }
     });
 
     setAuthCookies(response, accessToken, refreshToken);
@@ -136,7 +176,7 @@ router.post("/login", validateBody(loginSchema), async (request, response, next)
       include: { organization: true }
     });
 
-    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+    if (!user || !user.isActive || !(await bcrypt.compare(password, user.passwordHash))) {
       response.status(401).json({ error: "Invalid email or password" });
       return;
     }
@@ -148,10 +188,20 @@ router.post("/login", validateBody(loginSchema), async (request, response, next)
       email: user.email
     });
 
+    const sessionId = crypto.randomUUID();
     const refreshToken = signRefreshToken({
       userId: user.id,
       organizationId: user.organizationId,
-      sessionId: "login_session"
+      sessionId
+    });
+
+    await prisma.session.create({
+      data: {
+        id: sessionId,
+        userId: user.id,
+        refreshTokenHash: hashToken(refreshToken),
+        expiresAt: buildSessionExpiryDate(env.REFRESH_TOKEN_TTL)
+      }
     });
 
     setAuthCookies(response, accessToken, refreshToken);
@@ -221,7 +271,24 @@ router.post("/refresh", async (request, response, next) => {
       sessionId: payload.sessionId
     });
 
+    const rotated = await rotateRefreshSession(payload.sessionId, user.id, refreshToken, newRefreshToken);
+
+    if (!rotated) {
+      response.clearCookie(COOKIE_NAMES.access, buildAccessCookieOptions());
+      response.clearCookie(COOKIE_NAMES.refresh, buildRefreshCookieOptions());
+      response.status(401).json({ error: "Invalid refresh session" });
+      return;
+    }
+
     setAuthCookies(response, newAccessToken, newRefreshToken);
+
+    await writeAuditLog({
+      organizationId: user.organizationId,
+      actorUserId: user.id,
+      action: AuditAction.AUTH_REFRESH,
+      entityType: "session",
+      entityId: payload.sessionId
+    });
 
     response.status(200).json({
       user: {
@@ -239,6 +306,37 @@ router.post("/refresh", async (request, response, next) => {
 
 router.post("/logout", async (request, response, next) => {
   try {
+    const refreshToken = request.cookies?.[COOKIE_NAMES.refresh];
+
+    if (typeof refreshToken === "string" && refreshToken.length > 0) {
+      try {
+        const payload = verifyRefreshToken(refreshToken);
+
+        if (payload.type === "refresh") {
+          await prisma.session.updateMany({
+            where: {
+              id: payload.sessionId,
+              userId: payload.userId,
+              revokedAt: null
+            },
+            data: {
+              revokedAt: new Date()
+            }
+          });
+
+          await writeAuditLog({
+            organizationId: payload.organizationId,
+            actorUserId: payload.userId,
+            action: AuditAction.AUTH_LOGOUT,
+            entityType: "session",
+            entityId: payload.sessionId
+          });
+        }
+      } catch {
+        // Ignore invalid refresh tokens during logout and still clear cookies.
+      }
+    }
+
     response.clearCookie(COOKIE_NAMES.access, buildAccessCookieOptions());
     response.clearCookie(COOKIE_NAMES.refresh, buildRefreshCookieOptions());
     response.status(204).send();
