@@ -11,6 +11,14 @@ import { useCreateMeeting, useMeetings } from "@/hooks/use-meetings";
 import { useOrganization, useUpdateOrganization } from "@/hooks/use-organization";
 import { ApiError } from "@/lib/api-client";
 
+function combineDateAndTime(date: string, time: string): string | undefined {
+  if (!date || !time) {
+    return undefined;
+  }
+
+  return new Date(`${date}T${time}:00`).toISOString();
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const meetingStepRef = useRef<HTMLDivElement | null>(null);
@@ -27,7 +35,9 @@ export default function OnboardingPage() {
 
   const [meetingTitle, setMeetingTitle] = useState("");
   const [meetingDate, setMeetingDate] = useState("");
-  const [meetingExpiry, setMeetingExpiry] = useState("");
+  const [meetingTime, setMeetingTime] = useState("");
+  const [meetingExpiryDate, setMeetingExpiryDate] = useState("");
+  const [meetingExpiryTime, setMeetingExpiryTime] = useState("");
   const [accessType, setAccessType] = useState<"PUBLIC" | "PASSWORD" | "PRIVATE">("PUBLIC");
   const [password, setPassword] = useState("");
   const [meetingError, setMeetingError] = useState<string | null>(null);
@@ -138,12 +148,23 @@ export default function OnboardingPage() {
 
               setMeetingError(null);
 
+              const startsAt = combineDateAndTime(meetingDate, meetingTime);
+              const expiresAt =
+                meetingExpiryDate && meetingExpiryTime
+                  ? combineDateAndTime(meetingExpiryDate, meetingExpiryTime)
+                  : undefined;
+
+              if (!startsAt) {
+                setMeetingError("Choose both a meeting date and a meeting time.");
+                return;
+              }
+
               try {
                 const result = await createMeeting.mutateAsync({
                   title: meetingTitle,
                   description: `First meeting created during onboarding for ${organizationName}`,
-                  startsAt: meetingDate ? new Date(meetingDate).toISOString() : undefined,
-                  expiresAt: meetingExpiry ? new Date(meetingExpiry).toISOString() : undefined,
+                  startsAt,
+                  expiresAt,
                   accessPolicy: {
                     accessType,
                     password: accessType === "PASSWORD" ? password : undefined
@@ -174,18 +195,38 @@ export default function OnboardingPage() {
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-foreground">Date and Time</label>
-                <Input 
-                  type="datetime-local" 
-                  value={meetingDate} 
-                  onChange={(event) => setMeetingDate(event.target.value)} 
-                  step="60"
-                  required
-                />
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Input
+                    type="date"
+                    value={meetingDate}
+                    onChange={(event) => setMeetingDate(event.target.value)}
+                    required
+                  />
+                  <Input
+                    type="time"
+                    value={meetingTime}
+                    onChange={(event) => setMeetingTime(event.target.value)}
+                    step="60"
+                    required
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-foreground">Optional expiry</label>
-                <Input type="datetime-local" value={meetingExpiry} onChange={(event) => setMeetingExpiry(event.target.value)} />
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Input
+                    type="date"
+                    value={meetingExpiryDate}
+                    onChange={(event) => setMeetingExpiryDate(event.target.value)}
+                  />
+                  <Input
+                    type="time"
+                    value={meetingExpiryTime}
+                    onChange={(event) => setMeetingExpiryTime(event.target.value)}
+                    step="60"
+                  />
+                </div>
               </div>
             </div>
 
