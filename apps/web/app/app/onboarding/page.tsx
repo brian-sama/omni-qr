@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Circle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,11 @@ import { Input } from "@/components/ui/input";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { useCreateMeeting, useMeetings } from "@/hooks/use-meetings";
 import { useOrganization, useUpdateOrganization } from "@/hooks/use-organization";
+import { ApiError } from "@/lib/api-client";
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const meetingStepRef = useRef<HTMLDivElement | null>(null);
   const organizationQuery = useOrganization();
   const meetingsQuery = useMeetings();
   const updateOrganization = useUpdateOrganization();
@@ -20,12 +22,15 @@ export default function OnboardingPage() {
   const [organizationName, setOrganizationName] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#1B4DFF");
   const [logoUrl, setLogoUrl] = useState("");
+  const [brandingError, setBrandingError] = useState<string | null>(null);
+  const [brandingSuccess, setBrandingSuccess] = useState<string | null>(null);
 
   const [meetingTitle, setMeetingTitle] = useState("");
   const [meetingDate, setMeetingDate] = useState("");
   const [meetingExpiry, setMeetingExpiry] = useState("");
   const [accessType, setAccessType] = useState<"PUBLIC" | "PASSWORD" | "PRIVATE">("PUBLIC");
   const [password, setPassword] = useState("");
+  const [meetingError, setMeetingError] = useState<string | null>(null);
 
   useEffect(() => {
     if (organizationQuery.data?.organization) {
@@ -58,11 +63,27 @@ export default function OnboardingPage() {
             className="space-y-4"
             onSubmit={async (event) => {
               event.preventDefault();
-              await updateOrganization.mutateAsync({
-                name: organizationName,
-                primaryColor,
-                logoUrl: logoUrl || null
-              });
+
+              setBrandingError(null);
+              setBrandingSuccess(null);
+
+              try {
+                await updateOrganization.mutateAsync({
+                  name: organizationName,
+                  primaryColor,
+                  logoUrl: logoUrl.trim() || null
+                });
+
+                setBrandingSuccess("Organization profile saved. Continue below to create your first meeting.");
+                meetingStepRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+              } catch (error) {
+                if (error instanceof ApiError) {
+                  setBrandingError(error.message);
+                  return;
+                }
+
+                setBrandingError("Unable to save organization profile right now.");
+              }
             }}
           >
             <div>
@@ -89,6 +110,9 @@ export default function OnboardingPage() {
               <Input value={logoUrl} onChange={(event) => setLogoUrl(event.target.value)} placeholder="https://.../logo.svg" />
             </div>
 
+            {brandingError ? <p className="text-sm text-danger">{brandingError}</p> : null}
+            {brandingSuccess ? <p className="text-sm text-secondary">{brandingSuccess}</p> : null}
+
             <Button type="submit" disabled={updateOrganization.isPending}>
               {updateOrganization.isPending ? "Saving..." : "Save and continue"}
             </Button>
@@ -103,92 +127,107 @@ export default function OnboardingPage() {
         </Card>
       </div>
 
-      <Card className="border-border bg-card p-5">
-        <div className="mb-4 text-sm font-semibold text-foreground">Step 3: Create your first meeting</div>
+      <div ref={meetingStepRef}>
+        <Card className="border-border bg-card p-5">
+          <div className="mb-4 text-sm font-semibold text-foreground">Step 3: Create your first meeting</div>
 
-        <form
-          className="grid gap-4 lg:grid-cols-2"
-          onSubmit={async (event) => {
-            event.preventDefault();
+          <form
+            className="grid gap-4 lg:grid-cols-2"
+            onSubmit={async (event) => {
+              event.preventDefault();
 
-            const result = await createMeeting.mutateAsync({
-              title: meetingTitle,
-              description: `First meeting created during onboarding for ${organizationName}`,
-              startsAt: meetingDate ? new Date(meetingDate).toISOString() : undefined,
-              expiresAt: meetingExpiry ? new Date(meetingExpiry).toISOString() : undefined,
-              accessPolicy: {
-                accessType,
-                password: accessType === "PASSWORD" ? password : undefined
+              setMeetingError(null);
+
+              try {
+                const result = await createMeeting.mutateAsync({
+                  title: meetingTitle,
+                  description: `First meeting created during onboarding for ${organizationName}`,
+                  startsAt: meetingDate ? new Date(meetingDate).toISOString() : undefined,
+                  expiresAt: meetingExpiry ? new Date(meetingExpiry).toISOString() : undefined,
+                  accessPolicy: {
+                    accessType,
+                    password: accessType === "PASSWORD" ? password : undefined
+                  }
+                });
+
+                router.replace(`/app/meetings/${result.meeting.id}`);
+              } catch (error) {
+                if (error instanceof ApiError) {
+                  setMeetingError(error.message);
+                  return;
+                }
+
+                setMeetingError("Unable to create the meeting right now.");
               }
-            });
-
-            router.replace(`/app/meetings/${result.meeting.id}`);
-          }}
-        >
-          <div className="space-y-3">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">Meeting title</label>
-              <Input
-                value={meetingTitle}
-                onChange={(event) => setMeetingTitle(event.target.value)}
-                placeholder="Board Strategy Session"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">Date and Time</label>
-              <Input 
-                type="datetime-local" 
-                value={meetingDate} 
-                onChange={(event) => setMeetingDate(event.target.value)} 
-                step="60"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">Optional expiry</label>
-              <Input type="datetime-local" value={meetingExpiry} onChange={(event) => setMeetingExpiry(event.target.value)} />
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">Access type</label>
-              <select
-                value={accessType}
-                onChange={(event) => setAccessType(event.target.value as "PUBLIC" | "PASSWORD" | "PRIVATE")}
-                className="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-                title="Select meeting access type"
-              >
-                <option value="PUBLIC">Public</option>
-                <option value="PASSWORD">Password protected</option>
-                <option value="PRIVATE">Private</option>
-              </select>
-            </div>
-
-            {accessType === "PASSWORD" ? (
+            }}
+          >
+            <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">Meeting password</label>
+                <label className="mb-1 block text-sm font-medium text-foreground">Meeting title</label>
                 <Input
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Minimum 8 characters"
+                  value={meetingTitle}
+                  onChange={(event) => setMeetingTitle(event.target.value)}
+                  placeholder="Board Strategy Session"
                   required
                 />
               </div>
-            ) : null}
 
-            <div className="pt-1">
-              <Button type="submit" disabled={createMeeting.isPending}>
-                {createMeeting.isPending ? "Creating..." : "Create first meeting"}
-              </Button>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-foreground">Date and Time</label>
+                <Input 
+                  type="datetime-local" 
+                  value={meetingDate} 
+                  onChange={(event) => setMeetingDate(event.target.value)} 
+                  step="60"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-foreground">Optional expiry</label>
+                <Input type="datetime-local" value={meetingExpiry} onChange={(event) => setMeetingExpiry(event.target.value)} />
+              </div>
             </div>
-          </div>
-        </form>
-      </Card>
+
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-foreground">Access type</label>
+                <select
+                  value={accessType}
+                  onChange={(event) => setAccessType(event.target.value as "PUBLIC" | "PASSWORD" | "PRIVATE")}
+                  className="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+                  title="Select meeting access type"
+                >
+                  <option value="PUBLIC">Public</option>
+                  <option value="PASSWORD">Password protected</option>
+                  <option value="PRIVATE">Private</option>
+                </select>
+              </div>
+
+              {accessType === "PASSWORD" ? (
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Meeting password</label>
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="Minimum 8 characters"
+                    required
+                  />
+                </div>
+              ) : null}
+
+              <div className="pt-1">
+                <Button type="submit" disabled={createMeeting.isPending}>
+                  {createMeeting.isPending ? "Creating..." : "Create first meeting"}
+                </Button>
+              </div>
+
+              {meetingError ? <p className="text-sm text-danger">{meetingError}</p> : null}
+            </div>
+          </form>
+        </Card>
+      </div>
     </div>
   );
 }
